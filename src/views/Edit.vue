@@ -53,6 +53,9 @@
   </div>
 </template>
 
+
+
+
 <script lang="ts" setup>
 import { defineComponent, onMounted, onBeforeUnmount, ref, watch, provide } from 'vue';
 import { Editor, EditorContent, useEditor } from '@tiptap/vue-3';
@@ -299,6 +302,10 @@ onBeforeUnmount(() => {
   editor.value?.destroy();
 });
 </script>
+
+
+
+
 
 <style scoped>
 ::selection {
