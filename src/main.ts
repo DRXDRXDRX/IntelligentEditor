@@ -3,9 +3,14 @@ import { createPinia } from 'pinia'
 
 import './style.css'
 import 'remixicon/fonts/remixicon.css'
+
 import App from './App.vue'
 import router from './router'
 import ElementPlus from 'element-plus'
+// 导入 ant-design-vue 组件库
+import Antd from 'ant-design-vue';
+
+
 import 'element-plus/dist/index.css'
 import { createI18n } from 'vue-i18n';// 引入 i18n 配置
 
@@ -25,6 +30,7 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(router)
 app.use(pinia)
+app.use(Antd);
 app.use(ElementPlus)
 // 使用 i18n 插件
 app.use(i18n);

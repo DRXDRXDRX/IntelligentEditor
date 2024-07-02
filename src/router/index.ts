@@ -30,6 +30,16 @@ const routes = [
         path: '/reset',
         name: 'ResetPassword',
         component: () => import('../views/login/ResetPassword.vue')
+    },
+    {
+        path: '/demo',
+        name: 'demo',
+        component: () => import('../views/demo.vue')
+    },
+    {
+        path: '/toolbox',
+        name: 'toolbox',
+        component: () => import('../views/Toolbox.vue')
     }
 ] as RouteRecordRaw[];
 
