@@ -1,27 +1,14 @@
 <template>
   <div class="EditMain">
     <div class="leftTools">
-      <el-switch @change="hanldeSwitchTheme" v-model="themeValue"
-        style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
-        <template #active-action>
-          <i class="ri-contrast-2-line"></i>
-        </template>
-        <template #inactive-action>
-          <i class="ri-sun-fill"></i>
-        </template>
-      </el-switch>
-      <button onclick="dialog.showModal()">打开弹窗</button>
-      <dialog id="dialog" >
-          <input type="date" name="" id="">
-          <button onclick="dialog.close()">关闭弹窗</button>
-      </dialog>
     </div>
-    <div class="editor">
-      <generic-menu />
+    <div class="editor" :class="{ extension: !show, shrink: (first && show) }">
+      <!-- <generic-menu /> -->
       <div class="editorCard">
         <div class="topTools">
-          <EditorMenu :editor="editor" v-model:font="font" />
+          <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue" />
         </div>
+<!--
         <div class="editContent" @mouseup="checkSelection" @mousedown="hideToolbox">  
           <!-- 智能功能的toolbox -->
           <div v-if="showToolbox" :style="toolboxStyle" class="toolbox"> 
@@ -77,25 +64,38 @@
             </button>
           
           </div>
+          -->
           <!-- 智能功能的toolbox 结束 -->
-          
-
-          
-          <EditorContent style="margin: 8px;  overflow-y: auto; height: 100%;" :editor="editor" />
+        <div class="editContent">
           <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
-            <button @click="editor.chain().focus().toggleBold().run()"
-              :class="{ 'is-active': editor.isActive('bold') }">
-              bold
-            </button>
-            <button @click="editor.chain().focus().toggleItalic().run()"
-              :class="{ 'is-active': editor.isActive('italic') }">
-              italic
-            </button>
-            <button @click="editor.chain().focus().toggleStrike().run()"
-              :class="{ 'is-active': editor.isActive('strike') }">
-              strike
-            </button>
+            <div class="bubble-menu">
+              <button @click="editor.chain().focus().toggleBold().run()"
+                :class="{ 'is-active': editor.isActive('bold') }">
+                加粗
+              </button>
+              <button @click="editor.chain().focus().toggleItalic().run()"
+                :class="{ 'is-active': editor.isActive('italic') }">
+                倾斜
+              </button>
+              <button @click="editor.chain().focus().toggleStrike().run()"
+                :class="{ 'is-active': editor.isActive('strike') }">
+                删除线
+              </button>
+              <button @click="editor.chain().focus().toggleUnderline().run()"
+                :class="{ 'is-active': editor.isActive('underline') }">
+                下划线
+              </button>
+              <button @click="editor.chain().focus().toggleHighlight().run()"
+                :class="{ 'is-active': editor.isActive('highlight') }">
+                高亮
+              </button>
+              <button @click="polish">
+                润色
+              </button>
+            </div>
           </bubble-menu>
+          <dialog ref="dialog" @blur="dialog.close()"><polish-options></polish-options></dialog>
+          <EditorContent style="margin: 8px;  overflow-y: auto; height: 100%;" :editor="editor" />
         </div>
         
         <div class="bottomCount">
@@ -106,26 +106,27 @@
         </div>
       </div>
     </div>
-    <div class="rightTools">
-      <Outline :editor="editor" @heading-click="handleHeadingClick" />
-      <!-- @heading-click="handleHeadingClick" 是一个事件监听器，当用户点击大纲中的某个标题项时，会触发 handleHeadingClick 方法。这个方法通常用于处理导航逻辑，例如滚动到相应的文档位置或聚焦到相应的编辑区域。 -->
-    
+    <div class="rightTools" :class="{ hidden: !show }">
+      <Outline :editor="editor" @heading-click="handleHeadingClick" v-model:show="show" v-model:first="first" />
     </div>
-    
-
-     
+    <el-switch @change="handleSwitchTheme" v-model="themeValue"
+      style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
+      <template #active-action>
+        <i class="ri-contrast-2-line"></i>
+      </template>
+      <template #inactive-action>
+        <i class="ri-sun-fill"></i>
+      </template>
+    </el-switch>
   </div>
 </template>
 
-
-
-
 <script lang="ts" setup>
 import { defineComponent, onMounted, onBeforeUnmount, ref, watch, provide } from 'vue';
-import { Editor, EditorContent, useEditor } from '@tiptap/vue-3';
+import { Editor, EditorContent, useEditor, BubbleMenu } from '@tiptap/vue-3';
 import { storeToRefs } from 'pinia'
 import Underline from '@tiptap/extension-underline'
-import Italic from '@tiptap/extension-italic'
+// import Italic from '@tiptap/extension-italic'
 import TextAlign from '@tiptap/extension-text-align'
 
 // 列表
@@ -164,7 +165,6 @@ import Dropcursor from '@tiptap/extension-dropcursor';
 import { Color } from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
-import BubbleMenu from '@tiptap/extension-bubble-menu';
 
 
 // 使用Pinia
@@ -175,16 +175,19 @@ import { defineStore } from 'pinia'
 import { ElMessage } from 'element-plus';
 
 import Outline from '../components/Outline.vue'
-import GenericMenu from '../components/GenericMenu.vue'
+import PolishOptions from '../components/PolishOptions.vue'
+import http from '@/utils/request.ts'
 
 const fileStore = filesStore()
 // 主题色切换：
 const themeValue = ref(false);
-const hanldeSwitchTheme = (value) => {
+// false为白天模式，true为黑夜模式
+const handleSwitchTheme = (value) => {
   themeValue.value = value;
   if (value) {
     document.body.style.backgroundColor = '#464545  ';
     document.body.style.color = '#fff';
+
   } else {
     document.body.style.backgroundColor = '#fff';
     document.body.style.color = '#000';
@@ -252,7 +255,6 @@ const editor = useEditor({
       limit: 10000
     }),
     Underline,
-    Italic,
     Highlight.configure({
       multicolor: true,
     }),
@@ -296,31 +298,78 @@ const editor = useEditor({
     FontFamily.configure({
       types: ['textStyle'],
     }),
-    BubbleMenu.configure({
-      element: document.querySelector('.tip p'),
-    }),
 
   ],
-  onUpdate({ edit }) {
+  onUpdate({ editor }) {
     loadHeadings()
     editorStore.setEditorInstance(editor.value)
-    for (const file of fileStore.fileList) {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => {
-        const src = reader.result as string
-        editor.value?.chain().focus().setImage({ src }).run()
+    http.request({
+      url: '/doc',
+      method: 'POST',
+      data: {
+        json: JSON.stringify(editor.getJSON()),
+        html: editor.getHTML()
       }
-    }
+    }).then(res => {
+      // console.log(res.data)
+    })
+    // console.log(editor.getJSON())
+    // console.log(editor.getHTML())
+    // for (const file of fileStore.fileList) {
+    //   const reader = new FileReader()
+    //   reader.readAsDataURL(file)
+    //   reader.onload = () => {
+    //     const src = reader.result as string
+    //     editor.value?.chain().focus().setImage({ src }).run()
+    //   }
+    // }
   },
-  onCreate({ edit }) {
-    loadHeadings()
+  onCreate({ editor }) {
+
     editorStore.setEditorInstance(editor.value)
+    http.request({
+      url: '/doc',
+      method: 'GET',
+    }).then(res => {
+      editor.commands.setContent(JSON.parse(res.json))
+      loadHeadings()
+      // console.log(res.json)
+      // console.log(res.html)
+    })
   },
   injectCSS: false,
 })
 
+const dialog = ref<HTMLElement | null>(null)
+const polish = () => {
+  dialog.value.showModal()
+  const { from, to } = editor.value.state.selection
+  const selectedText = editor.value.state.doc.textBetween(from, to)
+  // console.log(selectedText)
+  http.request({
+    url: '/doc/polish',
+    method: 'POST',
+    data: {
+      selectedText
+    }
+  }).then(res => {
+    // 用润色后的文本替换选中的文本
+    // console.log(editor.commands)
+    // editor.commands.setContent(res.data.text);
+    // editor.commands.insertContentAt(editor.state.selection.from, res.data.text);
+    console.log(from, to)
 
+    const newFrom = from
+    editor.value.commands.deleteRange({ from, to })
+    console.log(newFrom)
+    editor.value.chain().insertContentAt(newFrom, res.data).run();
+    // console.log(from, to)
+    console.log(res.data);
+  }).catch(err => {
+    console.log(err);
+  })
+
+}
 
 
 
@@ -332,6 +381,9 @@ const handleHeadingClick = (heading) => {
   editor.value.commands.setTextSelection({ from: start, to: end + 1 });
   editor.value.commands.focus();
 };
+
+const show = ref(true)
+const first = ref(0)
 
 onMounted(() => {
   if (editor.value) {
@@ -437,10 +489,6 @@ const shouldShowToolbox = true;
 
 </script>
 
-
-
-
-
 <style scoped>
 ::selection {
   cursor: pointer;
@@ -469,6 +517,44 @@ const shouldShowToolbox = true;
 </style>
 
 <style>
+/* 大纲栏的缩进 */
+.hidden {
+  transform: translateX(88%);
+}
+
+.extension {
+  /* grid-column: 2 / 3; */
+  width: 133%;
+  /* transition: all 0.5s ease-in-out !important; */
+  animation: extension .5s ease-in-out;
+}
+
+.shrink {
+  width: 100%;
+  animation: shrink .5s ease-in-out;
+}
+
+@keyframes extension {
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 133%;
+  }
+}
+
+@keyframes shrink {
+  from {
+    width: 133%;
+  }
+
+  to {
+    width: 100%;
+  }
+}
+
+
 h1 {
   font-size: 30px;
   /* 自定义一级标题的字体大小 */
@@ -500,7 +586,8 @@ h6 {
 }
 
 body {
-  transition: all .4s;
+  transition: color .1s ease-out;
+  transition: background-color .5s ease-out;
 }
 
 .EditMain {
@@ -508,10 +595,11 @@ body {
   width: 100vw;
   height: 100vh;
   display: grid;
-  grid-template-columns: 20% 60% 20%;
+  grid-template-columns: 2fr 6fr 2fr;
   font-size: 15px;
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
+  overflow-x: hidden;
 }
 
 
@@ -529,13 +617,15 @@ body {
   height: 100%;
   width: 100%;
   overflow-y: auto;
+  transition: all .5s ease-in-out;
   /* padding-left:10px; */
 }
 
 .editor {
   /* background-color: #e6f6f9; */
-  box-shadow: 1px 0 20px 10px #fff;
+  /* box-shadow: 1px 0 20px 10px #fff; */
   height: 100vh;
+  /* width: 100%; */
 }
 
 .editorCard {
@@ -546,6 +636,7 @@ body {
   top: 1%;
   display: flex;
   flex-direction: column;
+  transition: all 0.5s ease-in-out;
 }
 
 .topTools {
@@ -565,6 +656,19 @@ body {
   /* border-radius: 10px; */
   /* background-color: white; */
 
+  dialog {
+    width: 500px;
+    height: 300px;
+    padding:10px 0 30px 10px;
+    position: fixed;
+    top: 50%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border-radius: 10px;
+    border:none;
+    box-shadow: 0 0 10px #CDCDCD;
+  }
 
   .tiptap {
     height: 100%;
@@ -581,6 +685,50 @@ body {
   justify-content: center;
   align-items: center;
   line-height: 30px;
+}
+
+.bubble-menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow: 0 0 3px #878686;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+
+  button {
+    width: 40px;
+    height: 25px;
+    font-size: 10px;
+    padding: 0;
+    margin: 0 3px;
+    background-color: #f5f5f5;
+    border: none;
+    cursor: pointer;
+    transition: all .3s;
+
+    &:hover {
+      background-color: #e5e5e5;
+      transform: scale(1.05);
+    }
+
+    &.is-active {
+      background-color: #CDCDCD;
+      color: #000000;
+      font-weight: 700;
+    }
+  }
+}
+
+.el-switch {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 100;
 }
 </style>
 

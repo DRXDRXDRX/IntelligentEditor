@@ -72,6 +72,7 @@ import { ref } from 'vue';
 import { ElMessage } from 'element-plus';   
 import { useRouter } from 'vue-router';
 import type { FormInstance, FormRules } from 'element-plus'
+import http from '@/utils/request.ts'
 
 const registerInfoRef = ref<FormInstance>()
 
@@ -106,7 +107,7 @@ const validatePass2 = (rule: any, value: any, callback: any) => {
 }
 
 const register = () => {
-    console.log(registerInfo.value);
+    console.log(registerInfo.value)
     
 //   执行登录逻辑
   ElMessage({
@@ -114,7 +115,12 @@ const register = () => {
     type: 'success',
     plain: true,
   });
-  router.push('/edit'); // 登录成功后跳转到编辑页面
+  http.request({
+    url: '/api/register',
+    method: 'POST',
+    data: registerInfo.value,
+  })
+//   router.push('/edit'); // 登录成功后跳转到编辑页面
 };
 
 </script>

@@ -24,7 +24,8 @@ interface MenuItemType {
 
 const props = defineProps<{
   editor: any,
-  font: string
+  font: string,
+  themeValue: boolean
 }>()
 const emit = defineEmits(["update:font"])
 
@@ -37,7 +38,7 @@ const changeFontSize = (newSize) => {
 }
 // const font = ref('Arial')
 const changeFontFamily = (newFamily) => {
-  console.log(newFamily)
+  // console.log(newFamily)
   emit("update:font", newFamily)
   props.editor.chain().focus().setFontFamily(newFamily).run()
 }
@@ -48,6 +49,7 @@ watch(
   (newEditor) => {
     if (newEditor) {
       updateMenuItems(newEditor)
+      
     }
   },
   { immediate: true }
@@ -65,7 +67,7 @@ const updateMenuItems = (newEditor) => {
       icon: 'italic',
       title: '倾斜',
       action: () => { newEditor.chain().focus().toggleItalic().run() },
-      isActive: () => { return newEditor.isActive('italic'); }
+      isActive: () => { return newEditor.isActive('italic') }
     },
     {
       icon: 'underline',
@@ -212,44 +214,25 @@ const updateMenuItems = (newEditor) => {
       icon: 'align-left',
       title: '左对齐',
       action: () => { newEditor.chain().focus().setTextAlign('left').run() },
-      isActive: () => false
+      isActive: () => newEditor.isActive({textAlign: 'left'})
     },
     {
       icon: 'align-center',
       title: '居中对齐',
       action: () => { newEditor.chain().focus().setTextAlign('center').run() },
-      isActive: () => false
+      isActive: () => newEditor.isActive({textAlign: 'center'})
     },
     {
       icon: 'align-right',
       title: '右对齐',
       action: () => { newEditor.chain().focus().setTextAlign('right').run() },
-      isActive: () => false
+      isActive: () => newEditor.isActive({textAlign: 'right'})
     },
     {
       icon: 'align-justify',
       title: '两端对齐',
       action: () => { newEditor.chain().focus().setTextAlign('justify').run() },
-      isActive: () => false
-    },
-    {
-      icon: 'align-top',
-      title: '顶部对齐',
-      action: () => { },
-      isActive: () => false
-    },
-    {
-      icon: 'align-vertically',
-      title: '垂直居中对齐',
-      action: () => {
-      },
-      isActive: () => false
-    },
-    {
-      icon: 'align-bottom',
-      title: '底部对齐',
-      action: () => { },
-      isActive: () => false
+      isActive: () => newEditor.isActive({textAlign: 'justify'})
     },
     {
       icon: 'functions',

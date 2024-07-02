@@ -1,7 +1,7 @@
 <template>
     <slot name="emailSend">
         <el-button :type="buttonType" :disabled="computedButtonDisabled" @click="handleSendCode"
-            style="font-size: 12px">
+            style="font-size: 12px; margin-left: 5px; width: 70px; font-weight: 700;">
             {{ buttonText }}
         </el-button>
     </slot>

@@ -238,21 +238,6 @@ import { ref, onMounted, onUnmounted } from 'vue';
 </script>
 
 <style lang="scss" scoped>
-/* 通用样式 */
-body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh; /* 确保内容垂直居中 */
-}
 
 .confluence-page {
   font-family: Arial, sans-serif;
@@ -260,6 +245,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden; /* 防止水平滚动条 */
 }
 
 /* 顶部导航栏 */
@@ -269,30 +255,30 @@ body {
   // 例如，如果你设置 top: 0; left: 0;，元素会固定在视口的左上角，即使页面滚动，它仍然保持在视口的左上角
   top: 0; /* 置顶 */
   left: 0; /* 左对齐 */
-  height: 8%; /* 占满高度 */
+  height: 7%; /* 占满高度 */
   width: 100%; /* 占满宽度 */
   display: flex;
   justify-content: flex-start; /* 从左到右排列 */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 添加阴影 */
   align-items: center;
-  padding: 10px 20px;
-  background-color: #edf3fc; /* 顶部导航背景颜色 */
+  padding: 10px 0px;
+  background-color: #817777; /* 顶部导航背景颜色 */
   z-index: 1000; /* 确保导航栏在其他元素之上 */
 
   .logo {
     height: 43px;
-    margin-left: 140px; /* 距离左边50px */
+    margin-left: 10px; /* 距离左边50px */
   }
 
    .el-dropdown {
-    margin-left: 20px; /* 调整与 logo 的间距 */
+    margin-left: 900px; /* 调整与 logo 的间距 */
   }
 
   .el-dropdown-link {
     cursor: pointer;
     font-size: 18px;
-    font-weight: 120;
-    color: #666;
+    font-weight: 700;
+    color: #fff;
     display: flex;
     align-items: center;
     margin-left: 20px;
@@ -315,49 +301,67 @@ body {
   .github{
     margin-left: 20px;
     a{
-      color: #666;
+      color: #fff;
       font-size: 18px;
-      font-weight: 120;
+      font-weight: 700;
       text-decoration: none;
+      &:hover {
+        color: #409EFF;
+      }
     }
+    
   }
   .register{
     margin-left: 20px;
     a{
-      color: #666;
+      color: #fff;
       font-size: 18px;
-      font-weight: 120;
+      font-weight: 700;
       text-decoration: none;
+      &:hover {
+        color: #409EFF;
+      } 
     }
   }
   .login{
     margin-left: 20px;
     a{
-      color: #666;
+      color: #fff;
       font-size: 18px;
-      font-weight: 120;
+      font-weight: 700;
       text-decoration: none;
+      &:hover {
+        color: #409EFF;
+      }
     }
   }
   .help{
     margin-left: 20px;
     a{
-      color: #666;
+      color: #fff;
       font-size: 18px;
-      font-weight: 120;
+      font-weight: 700;
       text-decoration: none;
+      &:hover {
+        color: #409EFF;
+      } 
     }
   }
 
 }
 
+a{
+  transition: all .5s;
+}
+
 /* 主体内容 */
 main {
+  margin: 0 auto;
   background: url('/home_background.svg') no-repeat center center / cover;
   display: flex;
   flex: 1;
-  padding: 2rem;
-  margin-top: 60px; /* 确保主内容在导航栏下方，值等于导航栏的高度 */
+  // padding: 2rem;
+  // margin-top: 60px; /* 确保主内容在导航栏下方，值等于导航栏的高度 */
 }
 
 // 无界智能编辑器名字
@@ -377,7 +381,7 @@ main {
   font-family: 'Poppins', sans-serif;
   font-size: 13px;
   font-weight: 150;
-  color: #666;
+  color: #fff;
 }
 
 
@@ -395,7 +399,7 @@ main {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(1px);
     border: 1px solid rgba(255, 255, 255, 0.18);
     transition: transform 0.3s ease-in-out;
 
@@ -451,7 +455,7 @@ main {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.18);
     position: relative;
     transition: transform 0.3s ease-in-out;
@@ -520,8 +524,6 @@ main {
 
    .carousel {
    top:-30%;
-   margin-left: 5%;
-   margin-right: 5%;
    position: relative;
    width: 100%;
    height: 40vh;
@@ -548,7 +550,7 @@ main {
    /* align-content:  
    定义多行内容的对齐方式（在子元素换行的情况下，类似于 justify-content 但作用于交叉轴）。 */
 
-   transition: transform 0.3s ease, box-shadow 0.3s ease;
+   transition: all 0.5s ease, box-shadow 0.3s ease;
    background-size: cover;
    background-position: center;   
  }
@@ -593,24 +595,26 @@ main {
    background: #f0f0f0;
  }
  }
- .carousel_outbox:hover{
-     transform: scale(1.05);
-    box-shadow: 10 10px 20px rgba(0, 0, 0, 0.4);
- }
+//  .carousel_outbox:hover{
+//      transform: scale(1.01);
+//     box-shadow: 10 10px 20px rgba(0, 0, 0, 0.4);
+//  }
  .slide:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.4);
 }
 
 
 // 播放视频
 
 .video_background{
+  border-radius: 10px;
+  margin: 0 auto;
   position: relative;
-  top:8vh;
-  width:100vw;
-  right:0vw;
+  top: 75px;
+  width:99vw;
   video{
+    border-radius: 10px;
     position: relative;
     width: 100%;
     height: 100%;
