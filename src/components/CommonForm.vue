@@ -12,7 +12,8 @@
             <slot name="verificationCode"></slot>
             <slot name="password"></slot>
             <slot name="confirm"></slot>
-            <slot n            <slot name="button"></slot>
+            <slot name="forget"></slot>
+            <slot name="button"></slot>
         </el-form>
     </el-card>
 </template>

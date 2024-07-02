@@ -9,21 +9,35 @@ const { headings } = storeToRefs(editorStore)
 const props = defineProps<{
     editor: any
 }>()
-const emit = defineEmits(['heading-click']);
+const emit = defineEmits(['heading-click', 'update:show', 'update:first']);
 
 const handleHeadingClick = (heading) => {
     console.log(heading);
-    
+
     emit('heading-click', heading);
     editorStore.setActiveHeading(heading.text)
 }
 
 const scrollTarget = ref()
+
+const show = ref(true)
+const first = ref(0)
+const toggle = () => {
+    show.value = !show.value
+    emit('update:show', show.value)
+    emit('update:first', 1)
+}
 </script>
 
 <template>
     <div class="outline__list">
-        <h2>大纲</h2>
+        <div class="header">
+            <el-tooltip class="box-item" effect="dark" :content="show ? '收起大纲' : '展开大纲'" placement="bottom">
+                <i class="ri-arrow-right-s-fill" :class="{ hidden: show }" @click="toggle"></i>
+            </el-tooltip>
+            <h2>大纲</h2>
+        </div>
+
         <template v-for="(heading, index) in headings" :key="index">
             <div @click="handleHeadingClick(heading)" class="outline__item" :class="`outline__item${heading.level}`">
                 {{ heading.text }}
@@ -36,6 +50,7 @@ const scrollTarget = ref()
 </template>
 
 <style scoped lang="scss">
+
 .outline {
     // opacity: 0.75;
     // border-radius: 0.5rem;
@@ -48,9 +63,41 @@ const scrollTarget = ref()
         list-style: none;
         font-size: 18px;
         padding: 0;
-        padding-bottom:10px;
+        padding-bottom: 10px;
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 5px 5px 0;
+        }
+
+        i {
+            cursor: pointer;
+            transition: all .5s;
+            transition: color .1s ease-out;
+
+            &::before {
+                font-size: 40px;
+            }
+
+            &:hover {
+                color: #409EFF;
+                // transform: scale(1.05);
+            }
+        }
+
+
+
+
+
+        .hidden {
+            transform: rotate(180deg);
+        }
 
         h2 {
+            // 中文字间距
+            letter-spacing: 20px;
             text-align: center;
             width: 96%;
             // border: 1px solid black;
@@ -74,7 +121,7 @@ const scrollTarget = ref()
 
         &1 {
             font-size: 18px;
-            padding-left: 0rem;
+            padding-left: 2.5rem;
         }
 
         &1:hover {
@@ -83,7 +130,7 @@ const scrollTarget = ref()
 
         &2 {
             font-size: 15px;
-            padding-left: 1rem;
+            padding-left: 3rem;
         }
 
         &2:hover {
@@ -92,22 +139,22 @@ const scrollTarget = ref()
 
         &3 {
             font-size: 13px;
-            padding-left: 2rem;
+            padding-left: 4rem;
         }
 
         &4 {
             font-size: 13px;
-            padding-left: 3rem;
+            padding-left: 5rem;
         }
 
         &5 {
             font-size: 13px;
-            padding-left: 4rem;
+            padding-left: 6rem;
         }
 
         &6 {
             font-size: 13px;
-            padding-left: 5rem;
+            padding-left: 7rem;
         }
     }
 
