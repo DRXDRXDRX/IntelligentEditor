@@ -269,7 +269,7 @@ body {
   // 例如，如果你设置 top: 0; left: 0;，元素会固定在视口的左上角，即使页面滚动，它仍然保持在视口的左上角
   top: 0; /* 置顶 */
   left: 0; /* 左对齐 */
-  height: 6%; /* 占满高度 */
+  height: 8%; /* 占满高度 */
   width: 100%; /* 占满宽度 */
   display: flex;
   justify-content: flex-start; /* 从左到右排列 */
