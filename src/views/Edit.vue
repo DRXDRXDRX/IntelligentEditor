@@ -8,64 +8,7 @@
         <div class="topTools">
           <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue" />
         </div>
-<!--
-        <div class="editContent" @mouseup="checkSelection" @mousedown="hideToolbox">  
-          <!-- 智能功能的toolbox -->
-          <div v-if="showToolbox" :style="toolboxStyle" class="toolbox"> 
-            <div id="components-dropdown-demo-placement"  >
-              <a-dropdown>
-                <template #default>
-                  <a-button  class="model_button">
-                    <i class="ri-flashlight-fill" style="color:green;font-size:18px;" :style="model_icon_style"></i>
-                  </a-button>
-                </template>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item class="model_list_item">
-                      <button class="model_name_button">
-                        <i class="ri-flashlight-fill" style="color:green;font-size:medium" ></i>
-                        <p style="text-align: left">erine-3.5</p>
-                      </button>
-                    </a-menu-item>
-                    <a-menu-item  class="model_list_item">
-                      <button class="model_name_button"> 
-                        <i class="ri-flashlight-fill" style="color:purple;font-size:medium"></i>
-                        <p>erine-4.0</p>
-                      </button>
-                    </a-menu-item>
-                    <a-menu-item  class="model_list_item">
-                      <button   class="model_name_button">
-                        <i class="ri-flashlight-fill" style="color:purple;font-size:medium"></i>
-                        <p>erine-4.0-turbo</p>
-                      </button>
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-            </div>
 
-            <button @click="continueWriting">
-               <i class="ri-magic-line"></i>
-              续写
-            </button>
-          
-            <button @click="polishText">
-              <i class="ri-pencil-line"></i>
-              润色
-            </button>
-          
-            <button @click="askQuestion">
-              <i class="ri-questionnaire-line"></i>
-              提问
-            </button>
-          
-            <button @click="hideToolbox" class="closeToolbox">
-              <i class="ri-close-large-fill"></i>
-            </button>
-          
-          </div>
-          -->
-          <!-- 智能功能的toolbox 结束 -->
         <div class="editContent">
           <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
             <div class="bubble-menu">
