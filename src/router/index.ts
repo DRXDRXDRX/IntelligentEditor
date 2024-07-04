@@ -37,9 +37,14 @@ const routes = [
         component: () => import('../views/demo.vue')
     },
     {
-        path: '/toolbox',
-        name: 'toolbox',
-        component: () => import('../views/Toolbox.vue')
+        path: '/help',
+        name: 'help',
+        component: () => import('../views/help.vue')
+    },
+    {
+        path:'/accountset',
+        name: 'accountset',
+        component: () => import('../views/accountset.vue')
     }
 ] as RouteRecordRaw[];
 
