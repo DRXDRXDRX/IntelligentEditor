@@ -41,12 +41,10 @@ const routes = [
         component: () => import('../views/demo.vue')
     },
     {
-        path: '/toolbox',
-        name: 'toolbox',
-        component: () => import('../views/Toolbox.vue')
-    },
-    { path: '/404', name:'NotFound', component: () => import('../views/NotFound.vue') },
-    { path: '/:pathMatch(.*)*', redirect:'/404' }
+        path: '/help',
+        name: 'help',
+        component: () => import('../views/help.vue')
+    }
 ] as RouteRecordRaw[];
 
 const router = createRouter({
