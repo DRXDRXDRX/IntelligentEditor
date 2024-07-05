@@ -83,7 +83,8 @@ const login = () => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: url('https://img1.wallspic.com/previews/8/3/1/8/7/178138/178138-ka_tong-shi_jue_yi_shu-lu_se_de-xing_zhi-zi_ran_huan_jing-x750.jpg') no-repeat center;
+  background-color: #fff;
+//   background: url('https://img1.wallspic.com/previews/8/3/1/8/7/178138/178138-ka_tong-shi_jue_yi_shu-lu_se_de-xing_zhi-zi_ran_huan_jing-x750.jpg') no-repeat center;
   background-size:cover;
   display:flex;
   justify-content: center;

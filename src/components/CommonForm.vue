@@ -61,9 +61,9 @@ const props = defineProps({
     width: 480px;
     height: fit-content;
     padding: 20px;
-    border-radius: 25px;
-    box-shadow: 0 0 35px 10px rgba(153, 151, 151, 0.8);
-    background-color: rgba(255, 255, 255, .8);
+    border-radius: 5px;
+    // box-shadow: 5px 5px 2px 1px rgba(153, 151, 151, 0.8);
+    // background-color: rgba(255, 255, 255, .8);
 
     ::v-deep(.el-form-item__content) {
         flex-wrap: nowrap;

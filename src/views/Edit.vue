@@ -4,20 +4,19 @@
       <el-tooltip class="box-item" effect="dark" :content="showLeft ? '收起左侧' : '展开左侧'" placement="bottom">
         <i :class="showLeft ? 'ri-indent-decrease' : 'ri-indent-increase'" @click="toggleLeft"></i>
       </el-tooltip>
-      <el-switch @change="handleSwitchTheme" v-model="themeValue" style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
+      <!-- <el-switch @change="handleSwitchTheme" v-model="themeValue" style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
         <template #active-action>
           <i class="ri-contrast-2-line"></i>
         </template>
         <template #inactive-action>
           <i class="ri-sun-fill"></i>
         </template>
-      </el-switch>
+      </el-switch> -->
       <el-tooltip class="box-item" effect="dark" :content="showRight ? '收起大纲' : '展开大纲'" placement="bottom">
         <i :class="showRight ? 'ri-indent-increase' : 'ri-indent-decrease'" @click="toggleRight"></i>
       </el-tooltip>
     </div>
-    <div class="leftTools" >
-    </div>
+      <left-sidebar />
     <div class="editor" :class="{ extensionLeft: !showLeft, shrinkLeft: showLeft, extensionRight: !showRight, shrinkRight: showRight }">
       <!-- <generic-menu /> -->
       <div class="editorCard" :class="{bothShrink: (!showLeft && !showRight)}">
@@ -27,7 +26,7 @@
         <div class="editContent">
           <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
             <div class="bubble-menu">  
-              <a-dropdown v-for="item of imageMenuList" :key="item.key">
+              <a-dropdown v-for="item of characterMenuList" :key="item.key">
                   <button @click="editor.chain().focus().toggleBold().run()"
                     :class="{ 'is-active': editor.isActive('bold') }">
                     <i :class="'ri-' + item.icon"></i>{{ item.title }}
@@ -132,8 +131,8 @@ import { ElMessage } from 'element-plus';
 import Outline from '../components/Outline.vue'
 import PolishOptions from '../components/PolishOptions.vue'
 import ChatMainPage from '../components/AIChat/ChatMainPage.vue'
+import LeftSidebar from '../components/LeftSidebar.vue'
 import http from '@/utils/request.ts'
-import VueDragResize from 'vue-drag-resize/src';
 
 const fileStore = filesStore()
 // 主题色切换：
@@ -769,7 +768,7 @@ body {
   display: grid;
   gap:0;
   grid-template-rows: 45px 1fr;
-  grid-template-columns: 4fr 10fr 5fr;
+  grid-template-columns: 3fr 12fr 5fr;
   font-size: 15px;
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
@@ -803,8 +802,8 @@ body {
 
 .leftTools {
   /* border-right: 1px solid #fff; */
-  background-color: hsla(0, 17%, 78%, 0.158);
-  box-shadow: 0px 0px 5px #fff inset;
+  /* background-color: hsla(0, 17%, 78%, 0.158); */
+  /* box-shadow: 0px 0px 5px #fff inset; */
   height: 100%;
   width: 100%;
   display: flex;
@@ -938,12 +937,12 @@ body {
 
 vue-drag-resize {
   position: absolute;
-  border: 1px solid #000;
+  /* border: 1px solid #000; */
   top: 200px;
   left: 207px;
   width: 100px;
   height: 100px;
-  background-color: pink;
+  /* background-color: pink; */
 }
 
 </style>

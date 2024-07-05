@@ -147,10 +147,11 @@ const reset = async () => {
         method: 'POST',
         data: {
             email: resetInfo.value.email,
-            verificationCode:resetInfo.value.verificationCode,
+            code:resetInfo.value.verificationCode,
             password: resetInfo.value.password,
         }
     })
+    console.log(result)
     if(result.code === 0) {
         ElMessage.success("重置密码成功")
         router.push('/login')
@@ -166,7 +167,8 @@ const reset = async () => {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: url('https://img3.wallspic.com/previews/6/6/9/7/7/177966/177966-fang_bao_you_xi-lian_sai_de_chuan_qi-2022-valorant-zi_se_de-x750.jpg') no-repeat center;
+    background-color: #fff;
+    // background: url('https://img3.wallspic.com/previews/6/6/9/7/7/177966/177966-fang_bao_you_xi-lian_sai_de_chuan_qi-2022-valorant-zi_se_de-x750.jpg') no-repeat center;
     background-size: cover;
     display:flex;
     justify-content: center;

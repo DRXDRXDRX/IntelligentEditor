@@ -173,7 +173,8 @@ const register = async () => {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: url('https://img2.wallspic.com/previews/0/8/7/7/7/177780/177780-zhi_zhu_xia-se_jian-limo_la_lai_si-chao_ji_ying_xiong-man_hua_shu-x750.jpg') no-repeat center;
+    background-color: #fff;
+    // background: url('https://img2.wallspic.com/previews/0/8/7/7/7/177780/177780-zhi_zhu_xia-se_jian-limo_la_lai_si-chao_ji_ying_xiong-man_hua_shu-x750.jpg') no-repeat center;
     background-size: cover;
     display:flex;
     justify-content: center;
