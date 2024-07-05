@@ -1,97 +1,46 @@
 <template>
   <div class="EditMain">
-    <div class="leftTools">
+    <div class="header-bar">
+      <el-tooltip class="box-item" effect="dark" :content="showLeft ? '收起左侧' : '展开左侧'" placement="bottom">
+        <i :class="showLeft ? 'ri-indent-decrease' : 'ri-indent-increase'" @click="toggleLeft"></i>
+      </el-tooltip>
+      <el-switch @change="handleSwitchTheme" v-model="themeValue" style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
+        <template #active-action>
+          <i class="ri-contrast-2-line"></i>
+        </template>
+        <template #inactive-action>
+          <i class="ri-sun-fill"></i>
+        </template>
+      </el-switch>
+      <el-tooltip class="box-item" effect="dark" :content="showRight ? '收起大纲' : '展开大纲'" placement="bottom">
+        <i :class="showRight ? 'ri-indent-increase' : 'ri-indent-decrease'" @click="toggleRight"></i>
+      </el-tooltip>
     </div>
-    <div class="editor" :class="{ extension: !show, shrink: (first && show) }">
+    <div class="leftTools" >
+    </div>
+    <div class="editor" :class="{ extensionLeft: !showLeft, shrinkLeft: showLeft, extensionRight: !showRight, shrinkRight: showRight }">
       <!-- <generic-menu /> -->
-      <div class="editorCard">
+      <div class="editorCard" :class="{bothShrink: (!showLeft && !showRight)}">
         <div class="topTools">
           <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue" />
         </div>
-<!--
-        <div class="editContent" @mouseup="checkSelection" @mousedown="hideToolbox">  
-          <!-- 智能功能的toolbox -->
-          <div v-if="showToolbox" :style="toolboxStyle" class="toolbox"> 
-            <div id="components-dropdown-demo-placement"  >
-              <a-dropdown>
-                <template #default>
-                  <a-button  class="model_button">
-                    <i class="ri-flashlight-fill" style="color:green;font-size:18px;" :style="model_icon_style"></i>
-                  </a-button>
-                </template>
-                <template #overlay>
-                  <a-menu>
-                    <a-menu-item class="model_list_item">
-                      <button class="model_name_button">
-                        <i class="ri-flashlight-fill" style="color:green;font-size:medium" ></i>
-                        <p style="text-align: left">erine-3.5</p>
-                      </button>
-                    </a-menu-item>
-                    <a-menu-item  class="model_list_item">
-                      <button class="model_name_button"> 
-                        <i class="ri-flashlight-fill" style="color:purple;font-size:medium"></i>
-                        <p>erine-4.0</p>
-                      </button>
-                    </a-menu-item>
-                    <a-menu-item  class="model_list_item">
-                      <button   class="model_name_button">
-                        <i class="ri-flashlight-fill" style="color:purple;font-size:medium"></i>
-                        <p>erine-4.0-turbo</p>
-                      </button>
-                    </a-menu-item>
-                  </a-menu>
-                </template>
-              </a-dropdown>
-            </div>
-
-            <button @click="continueWriting">
-               <i class="ri-magic-line"></i>
-              续写
-            </button>
-          
-            <button @click="polishText">
-              <i class="ri-pencil-line"></i>
-              润色
-            </button>
-          
-            <button @click="askQuestion">
-              <i class="ri-questionnaire-line"></i>
-              提问
-            </button>
-          
-            <button @click="hideToolbox" class="closeToolbox">
-              <i class="ri-close-large-fill"></i>
-            </button>
-          
-          </div>
-          -->
-          <!-- 智能功能的toolbox 结束 -->
         <div class="editContent">
           <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
-            <div class="bubble-menu">
-              <button @click="editor.chain().focus().toggleBold().run()"
-                :class="{ 'is-active': editor.isActive('bold') }">
-                加粗
-              </button>
-              <button @click="editor.chain().focus().toggleItalic().run()"
-                :class="{ 'is-active': editor.isActive('italic') }">
-                倾斜
-              </button>
-              <button @click="editor.chain().focus().toggleStrike().run()"
-                :class="{ 'is-active': editor.isActive('strike') }">
-                删除线
-              </button>
-              <button @click="editor.chain().focus().toggleUnderline().run()"
-                :class="{ 'is-active': editor.isActive('underline') }">
-                下划线
-              </button>
-              <button @click="editor.chain().focus().toggleHighlight().run()"
-                :class="{ 'is-active': editor.isActive('highlight') }">
-                高亮
-              </button>
-              <button @click="polish">
-                润色
-              </button>
+            <div class="bubble-menu">  
+              <a-dropdown v-for="item of imageMenuList" :key="item.key">
+                  <button @click="editor.chain().focus().toggleBold().run()"
+                    :class="{ 'is-active': editor.isActive('bold') }">
+                    <i :class="'ri-' + item.icon"></i>{{ item.title }}
+                  </button>
+                  <template #overlay>
+                      <a-menu v-show="item == []">
+                        <a-menu-item v-for="subItem of item.subItems" :key="subItem.key" :title="subItem.title">
+                          <i :class="'ri-' + subItem.icon" style="font-size:small; margin-right:10px;"></i>
+                          <span>{{ subItem.title }}</span>
+                        </a-menu-item>
+                      </a-menu>
+                  </template>
+              </a-dropdown>     
             </div>
           </bubble-menu>
           <dialog ref="dialog" @blur="dialog.close()"><polish-options></polish-options></dialog>
@@ -106,23 +55,29 @@
         </div>
       </div>
     </div>
-    <div class="rightTools" :class="{ hidden: !show }">
-      <Outline :editor="editor" @heading-click="handleHeadingClick" v-model:show="show" v-model:first="first" />
+    <div class="rightTools" :class="{ hiddenRight: !showRight, extraRight: !showLeft }">
+      <Outline :editor="editor" @heading-click="handleHeadingClick" />
+      <chat-main-page></chat-main-page>
     </div>
-    <el-switch @change="handleSwitchTheme" v-model="themeValue"
-      style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
-      <template #active-action>
-        <i class="ri-contrast-2-line"></i>
-      </template>
-      <template #inactive-action>
-        <i class="ri-sun-fill"></i>
-      </template>
-    </el-switch>
+    <vue-drag-resize
+        v-model:active="active"
+        v-model:x="x"
+        v-model:y="y"
+        v-model:width="width"
+        v-model:height="height"
+        :w="300"
+        :h="200"
+        :x="100"
+        :y="100"
+        :minWidth="50"
+        :minHeight="50"
+    >
+    </vue-drag-resize>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { defineComponent, onMounted, onBeforeUnmount, ref, watch, provide } from 'vue';
+import { defineComponent, onMounted, onBeforeUnmount, ref, watch, provide, getCurrentInstance  } from 'vue';
 import { Editor, EditorContent, useEditor, BubbleMenu } from '@tiptap/vue-3';
 import { storeToRefs } from 'pinia'
 import Underline from '@tiptap/extension-underline'
@@ -176,7 +131,9 @@ import { ElMessage } from 'element-plus';
 
 import Outline from '../components/Outline.vue'
 import PolishOptions from '../components/PolishOptions.vue'
+import ChatMainPage from '../components/AIChat/ChatMainPage.vue'
 import http from '@/utils/request.ts'
+import VueDragResize from 'vue-drag-resize/src';
 
 const fileStore = filesStore()
 // 主题色切换：
@@ -233,6 +190,32 @@ const loadHeadings = () => {
   editorStore.setHeadings(headings)
 
 }
+
+
+// WenSocket:
+const { appContext } = getCurrentInstance();
+const socket = appContext.config.globalProperties.$socket;
+// 发送数据
+
+const dataToSend = ref({
+  id: "668616147448aeceb9f229bd",
+  title: 'title',
+  json: {
+    key: "",
+  },
+});
+
+const sendData = () => {
+  if (socket.readyState === WebSocket.OPEN) {
+    console.log("发送数据：", dataToSend.value);
+    // 将JavaScript对象转换为JSON字符串
+    const message = JSON.stringify(dataToSend.value);
+    socket.send(message); // 发送消息
+    
+  } else {
+    console.error('WebSocket 连接未打开或已关闭。');
+  }
+};
 
 
 const font = ref('Arial')
@@ -301,42 +284,57 @@ const editor = useEditor({
 
   ],
   onUpdate({ editor }) {
-    loadHeadings()
+    
     editorStore.setEditorInstance(editor.value)
-    http.request({
-      url: '/doc',
-      method: 'POST',
-      data: {
-        json: JSON.stringify(editor.getJSON()),
-        html: editor.getHTML()
-      }
-    }).then(res => {
-      // console.log(res.data)
-    })
-    // console.log(editor.getJSON())
-    // console.log(editor.getHTML())
-    // for (const file of fileStore.fileList) {
-    //   const reader = new FileReader()
-    //   reader.readAsDataURL(file)
-    //   reader.onload = () => {
-    //     const src = reader.result as string
-    //     editor.value?.chain().focus().setImage({ src }).run()
+    // http.request({
+    //   url: '/doc',
+    //   method: 'POST',
+    //   data: {
+    //     json: JSON.stringify(editor.getJSON()),
+    //     html: editor.getHTML()
     //   }
-    // }
+    // }).then(res => {
+    //   console.log(res.data)
+    // })
+
+    
+    // WebSocket进行实时保存：
+    // 发送数据的方法
+    dataToSend.value.json.key = JSON.stringify(editor.getJSON())
+    sendData()
+    // socket.send(dataToSend.value)
+    loadHeadings()
+    
   },
-  onCreate({ editor }) {
+  async onCreate({ editor }) {
 
     editorStore.setEditorInstance(editor.value)
-    http.request({
+    const listResult = await http.request({
+      url: '/doc/list',
+      method: 'GET'
+    })
+    console.log(listResult.data.docs)
+    const id = listResult.data.docs[0].id
+
+    const docResult = await http.request({
       url: '/doc',
       method: 'GET',
-    }).then(res => {
-      editor.commands.setContent(JSON.parse(res.json))
-      loadHeadings()
-      // console.log(res.json)
-      // console.log(res.html)
+      params:{
+        id
+      }
     })
+    console.log(docResult)
+    editor.commands.setContent(JSON.parse(docResult.data.json.key))
+    loadHeadings()
+  
+},
+  onSelectionUpdate({ editor }) {
+    // console.log(1);
+    // 判断选中的是不是图片
+    const { from, to } = editor.state.selection
+    // console.log(editor.state.selection)
   },
+
   injectCSS: false,
 })
 
@@ -382,8 +380,96 @@ const handleHeadingClick = (heading) => {
   editor.value.commands.focus();
 };
 
-const show = ref(true)
+const showLeft = ref(true)
+const showRight = ref(true)
 const first = ref(0)
+const toggleLeft = () => {
+  showLeft.value = !showLeft.value
+}
+const toggleRight = () => {
+  showRight.value = !showRight.value
+}
+
+const characterMenuList = [
+  {
+    key: 1,
+    title: "加粗",
+    icon: 'bold',
+  },
+  {
+    key: 2,
+    title: "倾斜",
+    icon: 'italic',
+  },
+  {
+    key: 3,
+    title: "下划线",
+    icon: 'underline',
+  },
+  {
+    key: 4,
+    title: "删除线",
+    icon: 'strikethrough',
+  },
+  {
+    key: 5,
+    title: "高亮",
+    icon: 'heading',
+  },
+  {
+    key: 6,
+    title: '翻译',
+    icon: 'translate'
+  }
+]
+const imageMenuList = [
+  {
+    key: 1,
+    title: "AI问图",
+    icon: 'image',
+    subItems: []
+  },
+  {
+    key: 2,
+    title: "删除图片",
+    icon: 'delete-bin',
+    subItems: []
+  },
+  {
+    key: 3,
+    title: "复制图片",
+    icon: 'copy',
+    subItems: []
+  },
+  {
+    key: 4,
+    title: "下载图片",
+    icon: 'download',
+    subItems: []
+  },
+  {
+    key: 5,
+    title: "查看图片",
+    icon: 'eye',
+    subItems: []
+  }
+]
+
+
+// 截图：
+const x = ref(100);
+const y = ref(180);
+const width = ref(300);
+const height = ref(200);
+const active = ref(false);
+provide('screenShotInfo', {
+  x,
+  y,
+  width,
+  height,
+  active
+})
+
 
 onMounted(() => {
   if (editor.value) {
@@ -409,6 +495,30 @@ onMounted(() => {
     const src = e.target?.result as string
     editor.value?.chain().focus().setImage({ src }).run()
   })
+
+
+  // 监听连接打开事件
+  socket.addEventListener('open', () => {
+    // connectionStatus.value = '已连接';
+    console.log('WebSocket 连接已打开。')
+  });
+
+  // 监听消息事件
+  socket.addEventListener('message', (event) => {
+    console.log('收到消息:', event.data);
+  });
+
+  // 监听错误事件
+  socket.addEventListener('error', (error) => {
+    console.error('WebSocket 出现错误:', error);
+    // connectionStatus.value = '连接出错';
+  });
+
+  // 监听连接关闭事件
+  socket.addEventListener('close', () => {
+    // connectionStatus.value = '已断开连接';
+    console.log('WebSocket 连接已关闭。')
+  });
 });
 
 
@@ -416,7 +526,11 @@ onMounted(() => {
 // 在组件卸载前销毁Editor实例
 onBeforeUnmount(() => {
   editor.value?.destroy();
-  
+
+  if (socket) {
+    socket.close();
+    console.log('WebSocket 连接已关闭close。')
+  }
 });
 
 
@@ -518,41 +632,99 @@ const shouldShowToolbox = true;
 
 <style>
 /* 大纲栏的缩进 */
-.hidden {
-  transform: translateX(88%);
+.hiddenRight {
+  transform: translateX(100%);
 }
 
-.extension {
-  /* grid-column: 2 / 3; */
-  width: 133%;
+.extraRight {
+  grid-row:2 / 3;
+  animation: .5s ease-in-out;
+}
+
+.bothShrink {
+  width: 98% !important;
+  transform: translateX(-1%);
+}
+
+/* .hiddenLeft {
+  transform: translateX(-100%); 
+  opacity:0;
+  animation: hidden-left .5s ease-in-out;
+} */
+
+/* @keyframes hidden-left {
+  from {transform:translateX(-100%);}
+  to {transform:translateX(100%);}
+} */
+
+.hiddenIcon {
+  transform: rotate(180deg);
+}
+
+.extensionLeft {
+  grid-column: 1 / 3;
+  grid-row:2 / 4;
+  /* width: 140%; */
+  /* animation: extension-left .5s ease-in-out; */
+}
+
+.shrinkLeft {
+  width: 100% !important;
+  /* animation: shrink-left .5s ease-in-out; */
+}
+
+.shrinkLeft.extensionRight {
+  width: 150% !important;
+}
+
+@keyframes extension-left {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 135%;
+  }
+}
+
+@keyframes shrink-left {
+  from {
+    width: 133%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.extensionRight {
+  width: 134% !important;
+  /* transform:translateX(-21%); */
   /* transition: all 0.5s ease-in-out !important; */
-  animation: extension .5s ease-in-out;
+  /* animation: extension-right .5s ease-in-out !important; */
 }
 
-.shrink {
-  width: 100%;
-  animation: shrink .5s ease-in-out;
+.shrinkRight {
+  /* grid-column: 2 / 4; */
+  width: 100% ;
+  /* animation: shrink-right .5s ease-in-out !important; */
 }
 
-@keyframes extension {
+/* @keyframes extension-right {
   from {
+    width: 100% !important;
+  }
+  to {
+    width: 125% !important;
+  }
+}
+
+@keyframes shrink-right {
+  from {
+    width: 125%;
+  }
+  to {
     width: 100%;
   }
-
-  to {
-    width: 133%;
-  }
-}
-
-@keyframes shrink {
-  from {
-    width: 133%;
-  }
-
-  to {
-    width: 100%;
-  }
-}
+} */
 
 
 h1 {
@@ -595,13 +767,39 @@ body {
   width: 100vw;
   height: 100vh;
   display: grid;
-  grid-template-columns: 2fr 6fr 2fr;
+  gap:0;
+  grid-template-rows: 45px 1fr;
+  grid-template-columns: 4fr 10fr 5fr;
   font-size: 15px;
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
   overflow-x: hidden;
 }
 
+.header-bar {
+  /* position: fixed;
+  top:0; */
+  grid-column: 1 / 4;
+  width: 100vw;
+  height: 45px;
+  background-color: #fff;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+  box-shadow: 0 1px 5px 0px #ccc;
+  display: flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.header-bar i {
+  font-size: 30px;
+  cursor: pointer;
+  transition: all .5s ease-in-out;
+}
+
+.header-bar i:hover {
+  color: #409EFF;
+}
 
 .leftTools {
   /* border-right: 1px solid #fff; */
@@ -611,6 +809,7 @@ body {
   width: 100%;
   display: flex;
   justify-content: center;
+  transition: all .5s ease-in-out !important;
 }
 
 .rightTools {
@@ -624,19 +823,20 @@ body {
 .editor {
   /* background-color: #e6f6f9; */
   /* box-shadow: 1px 0 20px 10px #fff; */
-  height: 100vh;
+  /* height: 100vh; */
   /* width: 100%; */
+  transition: all .5s ease-in-out;
 }
 
 .editorCard {
   position: relative;
-  width: 95%;
+  width: 96%;
   height: 97%;
   left: 2.5%;
   top: 1%;
   display: flex;
   flex-direction: column;
-  transition: all 0.5s ease-in-out;
+  transition: transform 0.5s ease-in-out;
 }
 
 .topTools {
@@ -654,7 +854,11 @@ body {
   padding: 2px;
   /* border: 2px solid black; */
   /* border-radius: 10px; */
-  /* background-color: white; */
+  /* background-color: yellow; */
+  word-break: break-all;
+  /* 允许在任意字符间断行 */
+  hyphens: auto;
+  /* 允许自动连字符 */
 
   dialog {
     width: 500px;
@@ -688,48 +892,60 @@ body {
 }
 
 .bubble-menu {
+  width: 450px;
   display: flex;
-  justify-content: center;
+  flex-wrap:wrap;
+  justify-content: flex-start;
   align-items: center;
-  background-color: #f5f5f5;
-  border-radius: 5px;
+  background-color: #fff;
+  border-radius: 10px;
   padding: 5px;
-  box-shadow: 0 0 3px #878686;
-  position: absolute;
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+  /* position: absolute;
   top: 0;
   left: 0;
-  z-index: 100;
+  z-index: 100; */
 
   button {
-    width: 40px;
-    height: 25px;
-    font-size: 10px;
-    padding: 0;
+    /* width: 60px; */
+    color: grey;
+    width:fit-content;
+    height: 40px;
+    font-size: 15px;
+    font-weight:700;
+    text-align:center;
+    padding: 5px;
     margin: 0 3px;
-    background-color: #f5f5f5;
+    background-color: rgba(255, 255, 255, 0.9);
     border: none;
     cursor: pointer;
     transition: all .3s;
+    outline: none;
 
     &:hover {
-      background-color: #e5e5e5;
-      transform: scale(1.05);
+      color: #409EFF;
+      background-color: #e9e6e6;
+      /* transform: scale(1.05); */
     }
 
     &.is-active {
       background-color: #CDCDCD;
-      color: #000000;
+      color: #409EFF;
       font-weight: 700;
     }
   }
 }
 
-.el-switch {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  z-index: 100;
+vue-drag-resize {
+  position: absolute;
+  border: 1px solid #000;
+  top: 200px;
+  left: 207px;
+  width: 100px;
+  height: 100px;
+  background-color: pink;
 }
+
 </style>
 
 <style lang="scss">

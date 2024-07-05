@@ -9,7 +9,7 @@ const { headings } = storeToRefs(editorStore)
 const props = defineProps<{
     editor: any
 }>()
-const emit = defineEmits(['heading-click', 'update:show', 'update:first']);
+const emit = defineEmits(['heading-click']);
 
 const handleHeadingClick = (heading) => {
     console.log(heading);
@@ -20,22 +20,12 @@ const handleHeadingClick = (heading) => {
 
 const scrollTarget = ref()
 
-const show = ref(true)
-const first = ref(0)
-const toggle = () => {
-    show.value = !show.value
-    emit('update:show', show.value)
-    emit('update:first', 1)
-}
 </script>
 
 <template>
     <div class="outline__list">
         <div class="header">
-            <el-tooltip class="box-item" effect="dark" :content="show ? '收起大纲' : '展开大纲'" placement="bottom">
-                <i class="ri-arrow-right-s-fill" :class="{ hidden: show }" @click="toggle"></i>
-            </el-tooltip>
-            <h2>大纲</h2>
+            <h4>大&nbsp;&nbsp;&nbsp;纲</h4>
         </div>
 
         <template v-for="(heading, index) in headings" :key="index">
@@ -62,10 +52,14 @@ const toggle = () => {
         flex-direction: column;
         list-style: none;
         font-size: 18px;
-        padding: 0;
-        padding-bottom: 10px;
+        // padding: 0;
+        // padding-bottom: 10px;
+        height:37%;
+        overflow:auto;
+        position: relative;
 
         .header {
+            position:sticky;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -87,23 +81,19 @@ const toggle = () => {
             }
         }
 
-
-
-
-
         .hidden {
             transform: rotate(180deg);
         }
 
-        h2 {
-            // 中文字间距
-            letter-spacing: 20px;
+        h4 {
+            font-size: 21px;
+            font-weight:700;
             text-align: center;
             width: 96%;
             // border: 1px solid black;
-            background-color: #4ecafb;
-            box-shadow: 0px 0px 8px 2px rgba(0, 0, 0, 0.1);
-            border-radius: 15px;
+            // background-color: #fff;
+            // box-shadow: 1px 1px 4px 2px rgba(0, 0, 0, 0.1);
+            // border-radius: 15px;
         }
     }
 
@@ -121,7 +111,7 @@ const toggle = () => {
 
         &1 {
             font-size: 18px;
-            padding-left: 2.5rem;
+            padding-left: 1rem;
         }
 
         &1:hover {
@@ -139,29 +129,29 @@ const toggle = () => {
 
         &3 {
             font-size: 13px;
-            padding-left: 4rem;
+            padding-left: 5rem;
         }
 
         &4 {
             font-size: 13px;
-            padding-left: 5rem;
+            padding-left: 7rem;
         }
 
         &5 {
             font-size: 13px;
-            padding-left: 6rem;
+            padding-left: 9rem;
         }
 
         &6 {
             font-size: 13px;
-            padding-left: 7rem;
+            padding-left: 11rem;
         }
     }
 
     &__item:hover {
         opacity: 1;
         background-color: #ECF5FF;
-        color: #409EFF;
+        color: #000;
         font-weight: 700;
         font-size: 14px;
     }

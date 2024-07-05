@@ -3,13 +3,13 @@
   <div class="editor-menu">
     <MenuItem v-for="item in menuItems" :key="item.title" :icon="item.icon" :title="item.title" :action="item.action"
       :isActive="item.isActive"  ref="color" @changeColor="changeColor" @changeFontSize="changeFontSize"
-      @changeFontFamily="changeFontFamily">
+      @changeFontFamily="changeFontFamily" @getLink="getLink">
     </MenuItem>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, watch, defineEmits } from 'vue'
+import { defineProps, ref, watch, defineEmits, provide } from 'vue'
 import MenuItem from '@/components/MenuItem/index.vue'
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { filesStore } from '@/store'
@@ -42,6 +42,7 @@ const changeFontFamily = (newFamily) => {
   emit("update:font", newFamily)
   props.editor.chain().focus().setFontFamily(newFamily).run()
 }
+
 
 
 watch(
@@ -183,6 +184,7 @@ const updateMenuItems = (newEditor) => {
       icon: 'image-add-line',
       title: '本地图片',
       action: () => {
+          provide('newEditor', newEditor)
       },
       isActive: () => false
     },

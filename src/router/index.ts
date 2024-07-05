@@ -8,6 +8,10 @@ import { RouteRecordRaw, createRouter, createWebHistory, type RouteRecord  } fro
 const routes = [
     {
         path: '/',
+        redirect: '/home'
+    },
+    {
+        path: '/home',
         name: 'Home',
         component: () => import('../views/HomePage.vue'),
     },
@@ -40,7 +44,9 @@ const routes = [
         path: '/toolbox',
         name: 'toolbox',
         component: () => import('../views/Toolbox.vue')
-    }
+    },
+    { path: '/404', name:'NotFound', component: () => import('../views/NotFound.vue') },
+    { path: '/:pathMatch(.*)*', redirect:'/404' }
 ] as RouteRecordRaw[];
 
 const router = createRouter({

@@ -55,13 +55,14 @@ const loginInfo = ref({
   password: '',
 });
 const login = () => {
-  console.log(loginInfo.value.username, loginInfo.value.password)
   // 执行登录逻辑
-  
   http.request({
-        url: 'user/login',
+        url: '/user/login',
         method: 'POST',
-        data: loginInfo.value,
+        data: {
+            user_name: loginInfo.value.username,
+            password: loginInfo.value.password,
+        },
   }).then((res) => {
     if(res.code == 0) {
         router.push('/edit'); // 登录成功后跳转到编辑页面

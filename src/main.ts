@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import vueNativeWebSocket from 'vue-native-websocket-vue3';
 
 import './style.css'
 import 'remixicon/fonts/remixicon.css'
@@ -34,4 +35,10 @@ app.use(Antd);
 app.use(ElementPlus)
 // 使用 i18n 插件
 app.use(i18n);
+app.use(vueNativeWebSocket, 'https://firlin.cn/api/v1/docws', {
+  format: 'json',
+  reconnection: true, // 自动重连
+  reconnectionAttempts: 5, // 重连次数
+  reconnectionDelay: 3000 // 重连间隔时间
+})
 app.mount('#app')

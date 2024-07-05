@@ -1,6 +1,6 @@
 <template>
     <div class="root">
-        <common-form :info="resetInfo">
+        <common-form :info="resetInfo" ref="cmp">
             <template #email>
                 <el-form-item prop="email" label="邮箱" :rules="[
                     {
@@ -12,18 +12,16 @@
                         type: 'email',
                         message: '邮箱格式不正确',
                         trigger: ['blur', 'change'],
-                    },
+                    }
                 ]" class="emailInput">
                     <el-input v-model="resetInfo.email" clearable>
                         <template #suffix>
                             <i class="ri-mail-check-line" style="font-size: 26px"></i>
                         </template>
                     </el-input>
-                    <email-send>
+                    <email-send :email="resetInfo.email" :verifyEmailResult="verifyEmailResult">
                         <template #emailSend></template>
                     </email-send>
-                    <!-- <template #append> -->
-                        <!-- </template> -->
                 </el-form-item>
             </template>
             <template #verificationCode>
@@ -44,8 +42,8 @@
                     validator: validatePass,
                     trigger: 'blur',
                 },
-                { min: 3, max: 10, message: '密码在3-10位之间', trigger: 'blur' }]">
-                    <el-input clearable show-password v-model="resetInfo.password" placeholder="3-10位数字、英文" />
+                { min: 8, max: 20, message: '密码在8-20位之间', trigger: 'blur' }]">
+                    <el-input clearable show-password v-model="resetInfo.password" placeholder="8-20位" />
                 </el-form-item>
             </template>
             <template #confirm>
@@ -53,8 +51,8 @@
                     validator: validatePass2,
                     trigger: 'blur',
                 },
-                { min: 3, max: 10, message: '密码在3-10位之间', trigger: 'blur' }]">
-                    <el-input clearable show-password v-model="resetInfo.confirmPassword" placeholder="3-10位数字、英文" />
+                { min: 8, max: 20, message: '密码在8-10位之间', trigger: 'blur' }]">
+                    <el-input clearable show-password v-model="resetInfo.confirmPassword" placeholder="8-20位" />
                 </el-form-item>
             </template>
             <template #button>
@@ -70,9 +68,10 @@
 import CommonForm from '@/components/CommonForm.vue'
 import EmailSend from '@/components/EmailSend.vue'
 import { ElMessage } from 'element-plus'
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { FormInstance, FormRules } from 'element-plus'
+import http from '@/utils/request.ts'
 
 const resetInfoRef = ref<FormInstance>()
 
@@ -83,6 +82,23 @@ const resetInfo = ref({
     password: '',
     confirmPassword: '',
 })
+
+const cmp = ref(null)
+
+const verifyEmailResult = ref<boolean | string>('')
+watch(
+    () => resetInfo.value.email,
+    (newVal) => {
+        if(resetInfo.value){
+            cmp.value.formRef.validateField('email').then((res) => {
+                verifyEmailResult.value = res
+            }).catch((err) => {
+                verifyEmailResult.value = err.email[0].message
+            })
+        }
+    },
+)
+
 
 const validatePass = (rule: any, value: any, callback: any) => {
     if (value === '') {
@@ -106,15 +122,41 @@ const validatePass2 = (rule: any, value: any, callback: any) => {
     }
 }
 
-const reset = () => {
-    console.log(resetInfo.value);
-    ElMessage({
-        message: '重置密码成功！',
-        type: 'success',
-        plain: true,
+const reset = async () => {
+    // http.request({
+    //     url: '/user/email',
+    //     method: 'get',
+    // }).then(res => {
+    //     console.log(res);
+    // })
+
+    // const res = await http.request({
+    //     url: '/user/email',
+    //     method: 'GET',
+    //     params: {
+    //         email: resetInfo.value.email,
+    //         code: resetInfo.value.verificationCode
+    //     }
+    // })
+    // if(res.code !== 0) {
+    //     ElMessage.error("邮箱或验证码输入错误")
+    //     return
+    // }
+    const result = await http.request({
+        url: '/user/reset',
+        method: 'POST',
+        data: {
+            email: resetInfo.value.email,
+            verificationCode:resetInfo.value.verificationCode,
+            password: resetInfo.value.password,
+        }
     })
-    // console.log(route.path)
-    router.push('/login') // 重设密码成功后跳转到登录页面
+    if(result.code === 0) {
+        ElMessage.success("重置密码成功")
+        router.push('/login')
+    } else {
+        ElMessage.error("重置密码失败，请再次尝试")
+    }
 }
 
 </script>

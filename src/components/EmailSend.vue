@@ -10,6 +10,7 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
 import { ElMessage } from 'element-plus';
+import http from '@/utils/request.ts';
 
 interface CodeButtonProps {
     countdown: number;
@@ -24,12 +25,44 @@ const buttonType = ref<'primary' | 'danger'>('primary');
 const buttonText = ref('发送验证码');
 const computedButtonDisabled = ref(false);
 
+const props = defineProps({
+    email: {
+        type: String,
+        required: true
+    },
+    verifyEmailResult: {
+        required: true,
+    }
+});
+
 const handleSendCode = () => {
-  if (codeButtonProps.value.sending) return;
+  if(props.email === '') {
+    ElMessage.error('邮箱不能为空');
+    return
+  }
+  if(props.verifyEmailResult !== true){
+    ElMessage.error(props.verifyEmailResult);
+    return
+  }
+  // if (codeButtonProps.value.sending) return;
 
   // 发送验证码的逻辑
-  console.log('Sending verification code...');
-  ElMessage.success('验证码发送成功');
+  // console.log('Sending verification code...');
+  // ElMessage.success('验证码发送成功');
+  http.request({
+    url: '/user/email',
+    method: 'POST',
+    data: {
+      email: props.email
+    }
+  }).then(res => {
+    console.log(res)
+    if (res.code === 0) {
+      ElMessage.success('验证码发送成功');
+    } else {
+      ElMessage.error(res.msg);
+    }
+  })
 
   // 启动倒计时
   codeButtonProps.value.sending = true;

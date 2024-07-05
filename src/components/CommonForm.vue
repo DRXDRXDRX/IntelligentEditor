@@ -6,7 +6,7 @@
             <h2 class="main-title span_headline" >无界智能编辑器</h2>
             <h3 class="sub-title span_headline">Unbounded Intelligence</h3>
         </div>
-        <el-form label-width="auto" :model="props.info" style="max-width: 600px">
+        <el-form label-width="auto" :model="props.info" style="max-width: 600px" ref="formRef">
             <slot name="username"></slot>
             <slot name="email"></slot>
             <slot name="verificationCode"></slot>
@@ -18,6 +18,13 @@
     </el-card>
 </template>
 <script setup lang="ts">
+import { ref } from 'vue'
+import type { FormInstance } from 'element-plus'
+const formRef = ref<FormInstance>()
+
+defineExpose({
+    formRef
+})
 
 const props = defineProps({
     info: Object
@@ -51,7 +58,7 @@ const props = defineProps({
 
 
 .el-card {
-    width: 450px;
+    width: 480px;
     height: fit-content;
     padding: 20px;
     border-radius: 25px;

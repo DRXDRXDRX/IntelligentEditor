@@ -20,6 +20,8 @@ import remixiconUrl from 'remixicon/fonts/remixicon.symbol.svg'
 import { ref, watch, onMounted } from 'vue';
 import { ElSelect } from 'element-plus';
 import { filesStore } from '@/store';
+import http from '@/utils/request';
+import {imageStore} from '@/store'
 const props = defineProps<{
     icon: string
     title: string
@@ -49,21 +51,32 @@ watch(font, (newVal:string) => {
 })
 
 const fileStore = filesStore()
-
-const getFiles = (e) => {
+const getFiles = async (e) => {
     const files = e.target.files
-    // console.log(files)
-    fileStore.setFileList(files)
-    // console.log(fileStore.fileList)
-    for(const file of files) {
-        const reader = new FileReader()
-        reader.readAsDataURL(file)
-        reader.onload = (e) => {
-            console.log(e.target?.result)
-            fileStore.addSrc(e.target?.result)
+    console.log(files)
+    const formData = new FormData()
+    formData.append('file', files[0])
+    const res = await http.request({
+        url: '/file/upload',
+        method: 'POST',
+        data: formData,
+        headers: {
+            'Content-Type': 'multipart/form-data', // 这行通常是可选的，浏览器会自动处理
         }
-    }
-    fileStore.changeInsert()
+    })
+    console.log(res.data.file_link)
+
+    // fileStore.setFileList(files)
+    // console.log(fileStore.fileList)
+    // for(const file of files) {
+    //     const reader = new FileReader()
+    //     reader.readAsDataURL(file)
+    //     reader.onload = (e) => {
+    //         console.log(e.target?.result)
+    //         fileStore.addSrc(e.target?.result)
+    //     }
+    // }
+    // fileStore.changeInsert()
     
 }
 

@@ -1,14 +1,14 @@
 <template>
     <div class="root">
-        <common-form :info="registerInfo">
+        <common-form :info="registerInfo" ref="cmp">
             <template #username>
                 <el-form-item label="用户名" prop="username" :rules="[{
                     required: true,
                     message: '用户名不能为空',
                     trigger: 'blur',
                 },
-                { min: 3, message: '用户名至少3位', trigger: 'blur' }]">
-                    <el-input v-model="registerInfo.username" clearable placeholder="3位以上汉字、英文、数字">
+                { min: 5, max: 20, message: '用户名5-20位', trigger: 'blur' }]">
+                    <el-input v-model="registerInfo.username" clearable placeholder="5-20位">
                         <template #suffix>
                             <i class="ri-account-circle-fill" style="font-size: 28px"></i>
                         </template>
@@ -33,9 +33,22 @@
                             <i class="ri-mail-check-line" style="font-size: 26px"></i>
                         </template>
                     </el-input>
-                    <email-send>
-                        <template #emailSend></template>
+                    <email-send :email="registerInfo.email" :verifyEmailResult="verifyEmailResult">
+                        <template #emailSend ></template>
                     </email-send>
+                </el-form-item>
+            </template>
+            <template #verificationCode>
+                <el-form-item label="验证码" prop="verificationCode" :rules="[{
+                    required: true,
+                    message: '验证码不能为空',
+                    trigger: 'blur',
+                }]">
+                    <el-input clearable v-model="registerInfo.verificationCode">
+                        <template #suffix>
+                            <i class="ri-verified-badge-fill" style="font-size: 26px"></i>
+                        </template>
+                    </el-input>
                 </el-form-item>
             </template>
             <template #password>
@@ -43,8 +56,8 @@
                     validator: validatePass,
                     trigger: 'blur',
                 },
-                { min: 3, max: 10, message: '密码在3-10位之间', trigger: 'blur' }]">
-                    <el-input clearable show-password v-model="registerInfo.password" placeholder="3-10位数字、英文" />
+                { min: 8, max: 20, message: '密码在8-20位之间', trigger: 'blur' }]">
+                    <el-input clearable show-password v-model="registerInfo.password" placeholder="8-20位" />
                 </el-form-item>
             </template>
             <template #confirm>
@@ -52,8 +65,8 @@
                     validator: validatePass2,
                     trigger: 'blur',
                 },
-                { min: 3, max: 10, message: '密码在3-10位之间', trigger: 'blur' }]">
-                    <el-input  clearable show-password v-model="registerInfo.confirmPassword" placeholder="3-10位数字、英文" />
+                { min: 8, max: 20, message: '密码在8-10位之间', trigger: 'blur' }]">
+                    <el-input  clearable show-password v-model="registerInfo.confirmPassword" placeholder="8-20位" />
                 </el-form-item>
             </template>
             <template #button>
@@ -68,21 +81,36 @@
 <script lang="ts" setup>
 import CommonForm from '@/components/CommonForm.vue'
 import EmailSend from '@/components/EmailSend.vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';   
 import { useRouter } from 'vue-router';
 import type { FormInstance, FormRules } from 'element-plus'
 import http from '@/utils/request.ts'
 
-const registerInfoRef = ref<FormInstance>()
-
 const router = useRouter();
 const registerInfo = ref({
   username:'',
   email:'',
+  verificationCode:'',
   password: '',
   confirmPassword: '',
 });
+const registerInfoRef = ref<FormInstance>()
+
+const cmp = ref(null)
+const verifyEmailResult = ref<boolean | string>('')
+watch(
+    () => registerInfo.value.email,
+    (newVal) => {
+        if(registerInfo.value){
+            cmp.value.formRef.validateField('email').then((res) => {
+                verifyEmailResult.value = res
+            }).catch((err) => {
+                verifyEmailResult.value = err.email[0].message
+            })
+        }
+    },
+)
 
 const validatePass = (rule: any, value: any, callback: any) => {
   if (value === '') {
@@ -106,21 +134,36 @@ const validatePass2 = (rule: any, value: any, callback: any) => {
   }
 }
 
-const register = () => {
-    console.log(registerInfo.value)
-    
-//   执行登录逻辑
-  ElMessage({
-    message: '注册成功!',
-    type: 'success',
-    plain: true,
-  });
-  http.request({
-    url: '/api/register',
-    method: 'POST',
-    data: registerInfo.value,
-  })
-//   router.push('/edit'); // 登录成功后跳转到编辑页面
+const register = async () => {
+    const res = await http.request({
+        url: '/user/email',
+        method: 'GET',
+        params: {
+            email: registerInfo.value.email,
+            code: registerInfo.value.verificationCode
+        }
+    })
+    console.log(res)
+    if(res.code !== 0 || res.data.verified === false) {
+        ElMessage.error("邮箱或验证码输入错误")
+        return
+    }
+    const result = await http.request({
+        url: '/user/register',
+        method: 'POST',
+        data: {
+            user_name: registerInfo.value.username,
+            email: registerInfo.value.email,
+            verificationCode:registerInfo.value.verificationCode,
+            password: registerInfo.value.password,
+        }
+    })
+    if(result.code === 0) {
+        ElMessage.success("注册成功")
+        router.push('/login')
+    } else {
+        ElMessage.error("注册失败")
+    }
 };
 
 </script>

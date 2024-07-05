@@ -121,15 +121,15 @@ const { locale } = useI18n()
 const currentLanguage = ref('简体中文')
 
 const languageMap = {
+  'zh-CN': '简体中文',
   en: 'English',
+  'zh-TW': '繁體中文',
   ko: '한국어',
   ja: '日本語',
   fr: 'Français',
   de: 'Deutsch',
   es: 'Español',
   pt: 'Português',
-  'zh-CN': '简体中文',
-  'zh-TW': '繁體中文'
 }
 
 const handleCommand = (command) => {
@@ -255,14 +255,14 @@ import { ref, onMounted, onUnmounted } from 'vue';
   // 例如，如果你设置 top: 0; left: 0;，元素会固定在视口的左上角，即使页面滚动，它仍然保持在视口的左上角
   top: 0; /* 置顶 */
   left: 0; /* 左对齐 */
-  height: 7%; /* 占满高度 */
+  height: 60px; /* 占满高度 */
   width: 100%; /* 占满宽度 */
   display: flex;
   justify-content: flex-start; /* 从左到右排列 */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 添加阴影 */
   align-items: center;
   padding: 10px 0px;
-  background-color: #817777; /* 顶部导航背景颜色 */
+  background-color: #fff; /* 顶部导航背景颜色 */
   z-index: 1000; /* 确保导航栏在其他元素之上 */
 
   .logo {
@@ -277,8 +277,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
   .el-dropdown-link {
     cursor: pointer;
     font-size: 18px;
-    font-weight: 700;
-    color: #fff;
+    // font-weight: 700;
+    color: #1D2C49;
     display: flex;
     align-items: center;
     margin-left: 20px;
@@ -286,7 +286,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
     &.clicked {
       color: #409EFF; // 点击后的文本颜色
-      font-weight: 700; // 点击后字体粗细
+      // font-weight: 700; // 点击后字体粗细
     }
   }
 
@@ -301,9 +301,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
   .github{
     margin-left: 20px;
     a{
-      color: #fff;
+      color: #1D2C49;
       font-size: 18px;
-      font-weight: 700;
+      // font-weight: 700;
       text-decoration: none;
       &:hover {
         color: #409EFF;
@@ -314,9 +314,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
   .register{
     margin-left: 20px;
     a{
-      color: #fff;
+      color: #1D2C49;
       font-size: 18px;
-      font-weight: 700;
+      // font-weight: 700;
       text-decoration: none;
       &:hover {
         color: #409EFF;
@@ -326,9 +326,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
   .login{
     margin-left: 20px;
     a{
-      color: #fff;
+      color: #1D2C49;
       font-size: 18px;
-      font-weight: 700;
+      // font-weight: 700;
       text-decoration: none;
       &:hover {
         color: #409EFF;
@@ -338,9 +338,9 @@ import { ref, onMounted, onUnmounted } from 'vue';
   .help{
     margin-left: 20px;
     a{
-      color: #fff;
+      color: #1D2C49;
       font-size: 18px;
-      font-weight: 700;
+      // font-weight: 700;
       text-decoration: none;
       &:hover {
         color: #409EFF;
@@ -356,12 +356,14 @@ a{
 
 /* 主体内容 */
 main {
+  width: 100%;
   margin: 0 auto;
   background: url('/home_background.svg') no-repeat center center / cover;
   display: flex;
   flex: 1;
   // padding: 2rem;
-  // margin-top: 60px; /* 确保主内容在导航栏下方，值等于导航栏的高度 */
+  margin-top: 100px; /* 确保主内容在导航栏下方，值等于导航栏的高度 */
+  // margin-bottom:50px;
 }
 
 // 无界智能编辑器名字
@@ -381,14 +383,15 @@ main {
   font-family: 'Poppins', sans-serif;
   font-size: 13px;
   font-weight: 150;
-  color: #fff;
+  color: #1D2C49;
 }
 
 
 
 .parent_container{
-  position: relative;
-  top:-20vh;  
+  width: 100%;
+  padding: 50px 90px;
+  // top:-10vh;  
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 
   .top_section{
@@ -587,7 +590,8 @@ main {
    border-radius: 30px;
    background: #fff;
    color: #333;
-   
+   font-weight:700;
+   transition: all .5s ease;
    cursor: pointer;
  }
  
@@ -608,18 +612,17 @@ main {
 // 播放视频
 
 .video_background{
-  border-radius: 10px;
+  // border-radius: 10px;
   margin: 0 auto;
   position: relative;
-  top: 75px;
-  width:99vw;
+  top: 60px;
+  width:100vw;
   video{
-    border-radius: 10px;
+    // border-radius: 10px;
     position: relative;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    
     top: 0;
     left: 0;
     z-index: 10;
@@ -627,9 +630,9 @@ main {
 
 
   .video_text_content{
-    position: relative;
-    top:-50vh;
-    right:-3vw;
+    position: absolute;
+    top:55%;
+    left:5%;
     z-index:11;
     h1{
       font-size: 3em;
@@ -648,10 +651,15 @@ main {
       font-size: 16px;
       background-color: rgba(0, 0, 0, 0.5);
       color: white;
+      font-weight:700;
       border: none;
       cursor: pointer;
       border-radius: 5px;
-      transition: background-color 0.3s ease;
+      transition: all 0.4s ease;
+      &:hover {
+        font-size:18px;
+        background-color:#000;
+      }
     }
     
   }
