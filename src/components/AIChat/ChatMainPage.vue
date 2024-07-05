@@ -1,8 +1,22 @@
 <template>
     <div class="root">
         <div class="container" >
-            <h4>AI提问<i class="ri-message-3-line"></i></h4>
+            <h5>无界智灵<i class="ri-message-3-line"></i></h5>
+            <button @click="clearChat">清空聊天</button>
+            <div class="chatArea">
+                <div class="emptyShow" v-show="length === 0">
+                    快来和我聊天吧！<i class="ri-chat-1-line"></i>
+                </div>
+                <div :class="'chat-' + section.identity" v-for="section of chatRecords" :key="section.id">
+                    <img :src="section.identity === 'user' ? 'public/user_avatar/1.png' : 'public/user_avatar/1.png'" alt="头像" />
+                    <span>{{ section.content }}</span>
+                </div>
+            </div>
             <div class="magic-column">
+                <div class="hint">工具栏</div>
+                <div class="prompt" v-show="chosenPrompt !== ''">
+                    <i class="ri-sparkling-line"></i>/{{ chosenPrompt }}<i class="ri-close-circle-line" @click="chosenPrompt = ''"></i>
+                </div>
                 <a-dropdown>
                     <i class="ri-image-line"></i>
                     <template #overlay>
@@ -14,7 +28,9 @@
                         </a-menu>
                     </template>
                 </a-dropdown>   
-                <i class="ri-folder-music-line" @click="uploadAudio"></i>
+                <el-tooltip effect="light" content="语言转文字" placement="top">
+                    <i class="ri-folder-music-line" @click="uploadAudio"></i>
+                </el-tooltip>
             </div>
             <div class="input" :class="{focus: focused, lighter: focused}">
                 <textarea type="textarea" @focus="focused = true" @blur="focused = false" placeholder="请输入问题..." v-model="textInput" />
@@ -30,8 +46,11 @@
                             </a-menu>
                         </template>
                     </a-dropdown>   
-                    <i class="ri-send-plane-fill" @click="send"></i>
-                  
+                    <el-tooltip effect="light" content="发送" placement="top">
+                        <i class="ri-send-plane-fill" @click="send"></i>
+                    </el-tooltip>
+                    
+
                 </div>
             </div>
         </div>
@@ -39,13 +58,52 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, inject } from 'vue'
+import { ref, reactive, computed, inject } from 'vue'
 import { ElMessage } from 'element-plus'
 import http from '@/utils/request.ts'
 import { OCRRequest } from '@/api/index.ts'
 import html2canvas from 'html2canvas';
-
 const focused = ref<boolean>(false)
+
+
+// 聊天记录
+const chatRecords = reactive([
+    // {
+    //     id: 1,
+    //     identity: 'user',
+    //     content: '你好111111111111111111111111111111111111111111111111111111111111111111111111111111'
+    // },
+    // {
+    //     id: 2,
+    //     identity: 'ai',
+    //     content: '你好，我是你的人工智能助手，有什么可以帮助你的吗？'
+    // },
+    // {
+    //     id: 3,
+    //     identity: 'user',
+    //     content: '我想问一些问题'
+    // },
+    // {
+    //     id: 4,
+    //     identity: 'ai',
+    //     content: '好的，请问'
+    // },
+    // {
+    //     id: 5,
+    //     identity: 'user',
+    //     content: '你是谁？'
+    // },
+    // {
+    //     id: 6,
+    //     identity: 'ai',
+    //     content: '我是一个人工智能助手，可以根据我输入的文字返回一些信息'
+    // }
+])
+const length = computed(() => chatRecords.length)
+const clearChat = () => {
+    chatRecords.splice(0, length.value)
+}
+
 
 // 创建一个input框，用于隐式（不显示在页面中）选择文件
 const createInput = (fileType, apiAddress) => {
@@ -55,7 +113,6 @@ const createInput = (fileType, apiAddress) => {
     fileInput.type = 'file';
     fileInput.accept = `${fileType}/*`; // 限制只能选择图片文件
     fileInput.style.display = 'none'; // 隐藏 input 元素
-
     // 监听文件选择变化
     fileInput.addEventListener('change', async (event) => {
         const files = event.target.files;
@@ -73,6 +130,11 @@ const createInput = (fileType, apiAddress) => {
                 },
                 timeout: 10000
             })
+            chatRecords.push({
+                id: length.value + 1,
+                identity: 'ai',
+                content: res.data
+            })
             console.log(res.data)
             console.log(res.msg)
         } catch(error) {
@@ -80,9 +142,10 @@ const createInput = (fileType, apiAddress) => {
         }
         
     });
-
     return fileInput;
 }
+
+
 
 
 const screenShotInfo = inject('screenShotInfo')
@@ -92,7 +155,6 @@ const {x, y, width, height, active} = screenShotInfo
 // const width = inject('width')
 // const height = inject('height')
 // const active = inject
-
 const captureArea = async () => {
   const canvas = await html2canvas(document.documentElement, {
     x: x.value,
@@ -106,14 +168,11 @@ const captureArea = async () => {
   // 这里可以处理 file 对象，例如上传到服务器
   OCRRequest(file)
 };
-
 const dataURLtoFile = async (dataUrl, filename) => {
   const res = await fetch(dataUrl);
   const blob = await res.blob();
   return new File([blob], filename, { type: blob.type });
 };
-
-
 const imageItems = [
     {
         key: 1,
@@ -144,19 +203,12 @@ const chooseImageItem = ({ item, key }: { item: string ,key: string }) => {
         captureArea()
     }
 }
-
-
-
-
-
 // 上传音频
 const uploadAudio = () => {
     ElMessage.success('上传音频')
     const fileInput = createInput('audio', 'audio')
     fileInput.click();
 }
-
-
 const system_prompt = ref('你是一个人工智能助手，可以根据我输入的文字返回一些信息')
 // prompt的List
 const promptMenuItems = ref([
@@ -167,25 +219,31 @@ const promptMenuItems = ref([
     // { key: '5', title: '纠正语法错误', color: 'purple', icon: 'flashlight-fill' },
     // { key: '6', title: '续写',color: 'pink', icon: 'flashlight-fill'}
 ])
+// 输入框的内容
 const textInput = ref<string>('')
+const chosenPrompt = ref<string>('')
 // 选择prompt方法
 const handleChoose = ({ item, key }: { item: string, key: string }) => {
     console.log(key)
     console.log(item.title.split('-')[0])
     ElMessage.success(`选择了: ${item.title.split('-')[0]}-${key}`)
+    chosenPrompt.value = item.title.split('-')[0]
     system_prompt.value = item.title.split('-')[1]  
     console.log(system_prompt.value)
-    textInput.value = '/ ' + item.title.split('-')[0] + '\n'
+    // textInput.value = '/ ' + item.title.split('-')[0] + '\n'
 }
-// 除去第一行的文本
-const OtherLineText:string = () => {
-    const firstLineEndIndex = textInput.value.indexOf('\n')
-    return textInput.value.slice(firstLineEndIndex + 1).trim()
-}
+
+
 // 输入框的发送按钮
 const send = async () => {
-    const user_prompt = textInput.value.includes('\n') ? OtherLineText() : textInput.value
+    const user_prompt = textInput.value
+    textInput.value = ''
     console.log(user_prompt);
+    chatRecords.push({
+        id: length.value + 1,
+        identity: 'user',
+        content: user_prompt
+    })
     console.log(system_prompt.value)
     try {
         const res = await http.request({
@@ -197,6 +255,11 @@ const send = async () => {
             },
             timeout: 20000
         })
+        chatRecords.push({
+            id: length.value + 1,
+            identity: 'ai',
+            content: res.data
+        })
         console.log(res)
         // ElMessage.success(textInput.value)
         // ElMessage.success(res.msg)
@@ -205,19 +268,19 @@ const send = async () => {
         ElMessage.error('请求失败')
         console.log(error)
     }
-    
 }
+
+
 
 </script>
 
 <style lang="scss" scoped>
 .root {
     // background-color:#F7F7F7;
-    height: 61%;
+    height: 60%;
     margin:5px;
     margin-left:0;
     padding:5px;
-
     .container {
         background-color:white;
         height:100%;
@@ -231,20 +294,169 @@ const send = async () => {
         justify-content:flex-end;
         align-items:center;
         
-
-        h4 {
+        h5 {
             position: absolute;
             top: 1%;
             font-weight:700;
             text-align:center;
+            i {
+                color: #8A57EA;
+            }
+        }
+
+        h5+button {
+            position: absolute;
+            top: 1.5%;
+            right: 1%;
+            font-size: 10px;
+            cursor:pointer;
+            color:#959595;
+            transition: all .3s ease-in-out;
+            &:hover {
+                color: #8A57EA;
+            }
+        }
+
+        .chatArea {
+            position: relative;
+            width: 100%;
+            height: 61%;
+            padding: 5px;
+            background-color: #F4F4F4;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            overflow-y: auto;
+            scrollbar-color: #C6C6C6 #F7F7F7;
+            scrollbar-width: 2px;
+            transition: all .3s ease-in-out;
+            scrollbar-arrow: none;
+            &::-webkit-scrollbar {
+                width: 20px;
+            }
+            &::-webkit-scrollbar-track {
+                background: #F7F7F7;
+                border-radius: 10px;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #C6C6C6;
+                border-radius: 10px;
+                border: 2px solid #F7F7F7;
+            }
+            &::-webkit-scrollbar-thumb:hover {
+                background-color: #A0A0A0;
+            }
+
+            .emptyShow {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 15px;
+                color: #C6C6C6;
+                cursor: default;
+                user-select: none;
+            }
+
+            .chat-ai, .chat-user {
+                margin: 10px 0;
+                display:flex;
+                align-items:flex-start !important;
+                img {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    margin-top:5px !important;
+                    margin: 0 5px;
+                }
+                span {
+                    background-color: #F7F7F7;
+                    padding: 5px;
+                    font-size:12px;
+                    letter-spacing:1px;
+                    border-radius: 6px;
+                    border: 1px solid #F7F7F7;
+                    box-shadow: 0 0 5px 1px rgba(85, 85, 85, 0.1);
+                    max-width: 80%;
+                    // 断行
+                    word-break: break-all;
+                    // 允许在任意字符间断行
+                    hyphens: auto;
+                    scrollbar-color: #C6C6C6 #F7F7F7;
+                    scrollbar-width: 2px;
+                    transition: all .3s ease-in-out;
+                }
+            }
+
+            .chat-ai {
+                justify-content:flex-start;
+                align-items:center;
+            }
+
+            .chat-user {
+                flex-direction: row-reverse;
+                justify-content:flex-start;
+            }
         }
 
         .magic-column {
-            width: 100%;
+            position: relative;
+            width: 96%;
+            height: 30px;
             display:flex;
             justify-content:flex-end;
             align-items:center;
-            margin-right:5px;
+            // margin-right:5px;
+            border: 2px dotted grey;
+            border-radius: 6px;
+            margin: 5px 0;
+
+            .hint {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 10px;
+                letter-spacing: 2px;
+                color: rgb(181, 180, 180);
+                user-select: none;  
+                cursor: default;
+                z-index: 10;
+            }
+
+            .prompt {
+                position: absolute;
+                left: 1%;
+                display: flex;
+                align-items: flex-start;
+                background-color: #F7F7F7;
+                border-radius: 8px;
+                font-size: 13px;
+                color: #8A57EA;
+                cursor: default;
+                transition: all .3s ease-in-out !important;
+
+                i {
+                    font-size: 15px;
+                    &:first-child {
+                        margin-left:2px;
+                        margin-right: 3px;
+                        color: #8A57EA;
+                        cursor: default;
+                    }
+                    &:last-child {
+                        margin-left: 5px;
+                        cursor: pointer;
+                        transition: all .3s ease-in-out;
+                        &:hover {
+                            color: #FF0000;
+                        }
+                    }
+                }
+
+                &:hover {
+                    background-color: #E5E5E5;
+                }
+            }
+
             i {
                 margin-right:2px;
                 cursor:pointer;
@@ -257,7 +469,6 @@ const send = async () => {
             }
 
         }
-
         .input {
             // position: absolute;
             // bottom: 1%;
@@ -267,11 +478,10 @@ const send = async () => {
             width: 96%;
             padding: 5px;
             // height: 60px;
-            max-height:50%;
+            max-height:20%;
             display: flex;
             flex-direction: column;
             transition: all .3s ease-in-out;
-
             textarea {
                 width: 100%;
                 height: 80px;
@@ -291,38 +501,31 @@ const send = async () => {
                 scrollbar-width: 2px;
                 transition: all .3s ease-in-out;
                 scrollbar-arrow: none;
-
                 &::placeholder {
                     font-size:14px;
                     color: #C6C6C6;
                 }
-
                 /* Custom Scrollbar */
                 &::-webkit-scrollbar {
                     width: 20px;
                 }
-
                 &::-webkit-scrollbar-track {
                     background: #F7F7F7;
                     border-radius: 10px;
                 }
-
                 &::-webkit-scrollbar-thumb {
                     background-color: #C6C6C6;
                     border-radius: 10px;
                     border: 2px solid #F7F7F7;
                 }
-
                 &::-webkit-scrollbar-thumb:hover {
                     background-color: #A0A0A0;
                 }
             }
-
             textarea:focus {
                 outline:none;
                 background-color:#fff;
             }
-
             .selection {
                 position:relative;
                 display:flex;
@@ -331,7 +534,6 @@ const send = async () => {
                 margin-top:5px;
                 width: 100%;
                 // background-color: #989898;
-
                 
                 
                 svg {
@@ -345,7 +547,6 @@ const send = async () => {
                         color: #8453DF;
                     }
                 }
-
                 i {
                     cursor:pointer;
                     font-size:17px;
@@ -355,37 +556,29 @@ const send = async () => {
                         color: #8453DF;
                     }
                 }
-
                 i.ri-send-plane-fill {
                     position: absolute;
                     right: 10px;
                 }
             }
-
             
         }
-
         .focus {
             border: 1px solid #C6C6C6;
             // box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.1);
         }
-
         .lighter {
             background-color: #FFF;
         }
-
     }
 }
-
-.ant-dropdown-menu {
-  margin-top:-10px;
+.ant-dropdown:first-of-type .ant-dropdown-menu {
+  margin-bottom:-5px;
 }
-
 button {
   position: absolute;
   top: 0;
   right: 0;
   z-index: 10;
 }
-
 </style>

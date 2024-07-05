@@ -768,7 +768,7 @@ body {
   display: grid;
   gap:0;
   grid-template-rows: 45px 1fr;
-  grid-template-columns: 3fr 12fr 5fr;
+  grid-template-columns: 2fr 13fr 5fr;
   font-size: 15px;
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
