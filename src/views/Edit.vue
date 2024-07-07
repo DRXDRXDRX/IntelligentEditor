@@ -58,20 +58,7 @@
       <Outline :editor="editor" @heading-click="handleHeadingClick" />
       <chat-main-page></chat-main-page>
     </div>
-    <vue-drag-resize
-        v-model:active="active"
-        v-model:x="x"
-        v-model:y="y"
-        v-model:width="width"
-        v-model:height="height"
-        :w="300"
-        :h="200"
-        :x="100"
-        :y="100"
-        :minWidth="50"
-        :minHeight="50"
-    >
-    </vue-drag-resize>
+    
   </div>
 </template>
 
@@ -122,7 +109,7 @@ import FontFamily from '@tiptap/extension-font-family';
 
 
 // 使用Pinia
-import { useEditorStore } from '@/store'
+import { useEditorStore, useSelectionStore } from '@/store'
 import { filesStore } from '@/store';
 import EditorMenu from '../components/EditorMenu/index.vue'
 import { defineStore } from 'pinia'
@@ -134,6 +121,7 @@ import ChatMainPage from '../components/AIChat/ChatMainPage.vue'
 import LeftSidebar from '../components/LeftSidebar.vue'
 import http from '@/utils/request.ts'
 
+const selectionStore = useSelectionStore()
 const fileStore = filesStore()
 // 主题色切换：
 const themeValue = ref(false);
@@ -331,7 +319,10 @@ const editor = useEditor({
     // console.log(1);
     // 判断选中的是不是图片
     const { from, to } = editor.state.selection
-    // console.log(editor.state.selection)
+    // 获取选中内容
+    const selectedText = editor.state.doc.textBetween(from, to)
+    console.log(selectedText) 
+    selectionStore.setSelection(selectedText)
   },
 
   injectCSS: false,
@@ -454,20 +445,6 @@ const imageMenuList = [
   }
 ]
 
-
-// 截图：
-const x = ref(100);
-const y = ref(180);
-const width = ref(300);
-const height = ref(200);
-const active = ref(false);
-provide('screenShotInfo', {
-  x,
-  y,
-  width,
-  height,
-  active
-})
 
 
 onMounted(() => {
@@ -768,7 +745,7 @@ body {
   display: grid;
   gap:0;
   grid-template-rows: 45px 1fr;
-  grid-template-columns: 2fr 13fr 5fr;
+  grid-template-columns: 2fr 12fr 5fr;
   font-size: 15px;
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
@@ -822,16 +799,16 @@ body {
 .editor {
   /* background-color: #e6f6f9; */
   /* box-shadow: 1px 0 20px 10px #fff; */
-  /* height: 100vh; */
+  height: 100%;
   /* width: 100%; */
   transition: all .5s ease-in-out;
 }
 
 .editorCard {
   position: relative;
-  width: 96%;
+  width: 98%;
   height: 97%;
-  left: 2.5%;
+  left: 1.3%;
   top: 1%;
   display: flex;
   flex-direction: column;
@@ -935,15 +912,6 @@ body {
   }
 }
 
-vue-drag-resize {
-  position: absolute;
-  /* border: 1px solid #000; */
-  top: 200px;
-  left: 207px;
-  width: 100px;
-  height: 100px;
-  /* background-color: pink; */
-}
 
 </style>
 

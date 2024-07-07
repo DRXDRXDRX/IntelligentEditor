@@ -58,3 +58,15 @@ export const filesStore = defineStore('files', () => {
     changeInsert
   }
 })
+
+
+export const useSelectionStore = defineStore('selection', () => {
+  const selection = ref('')
+  const setSelection = (data) => {
+    selection.value = data
+  }
+  return {
+    selection,
+    setSelection
+  }
+})

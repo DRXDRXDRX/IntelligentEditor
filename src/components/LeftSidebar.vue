@@ -159,13 +159,13 @@ onMounted(() => {
       </button>
   </div> -->
   <div class="left_sidebar"   :class="{ 'sidebar_closed': !isSidebarOpen, hidden: props.showLeft }">
-
+    <button class="add_new_doc" @click="add_new_doc_handler">
+      新&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;建
+    </button>
     <div :class="['sidebar']" ref="sidebar">
-      <button class="add_new_doc" @click="add_new_doc_handler">
-        Start New Doc
-      </button>
+      
       <div class="starred" >
-        <h3>Starred</h3>
+        <h3>收藏</h3>
         <div class="starred_item">
           <span v-if="starredHistory==[]">Star projects and files you use often</span>
             <transition-group name="list" tag="ul">
@@ -194,12 +194,12 @@ onMounted(() => {
           <li v-for="item in todayHistory.slice().reverse()" :key="item.id">
             <div class="button_container"  @mouseover="hoveredItem_history = item.id" @mouseleave="hoveredItem_history = null">
               <button @click="handleClick(item.title)">{{ truncateTitle(item.title) }}</button>
-                <div class="action_buttons"  v-if="hoveredItem_history === item.id">
-                  <button @click="Add_to_started(item.id,'今天');Set_to_be_delected_file_title_and_column_name(item.id,'今天');delet_doc_handler()"><i class="ri-star-line"></i></button>
-                  <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'今天');Comfirm_dialog_refer.showModal();">
-                    <i class="ri-delete-bin-6-line"></i>
-                  </button>
-                </div>
+              <div class="action_buttons"  v-if="hoveredItem_history === item.id">
+                <button @click="Add_to_started(item.id,'今天');Set_to_be_delected_file_title_and_column_name(item.id,'今天');delet_doc_handler()"><i class="ri-star-line"></i></button>
+                <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'今天');Comfirm_dialog_refer.showModal();">
+                  <i class="ri-delete-bin-6-line"></i>
+                </button>
+              </div>
             </div>
           </li>        
         </transition-group>
@@ -450,16 +450,18 @@ onMounted(() => {
 
 
 <style lang="scss" scoped>
-  html, body {
-    overflow: hidden; /* 禁止滚动并隐藏超出部分 */
-    height: 100%; /* 定义高度为视口高度 */
-    width:100vw; /* 定义宽度为视口宽度 */
-    margin: 0; /* 移除默认的边距 */
-  }
+  // html, body {
+  //   overflow: hidden; /* 禁止滚动并隐藏超出部分 */
+  //   height: 100%; /* 定义高度为视口高度 */
+  //   width:100vw; /* 定义宽度为视口宽度 */
+  //   margin: 0; /* 移除默认的边距 */
+  // }
 
 
 .left_sidebar {
   width:250px;
+  padding-top:5px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -498,24 +500,12 @@ onMounted(() => {
   }
   }
 
-  
-  
-  
 
-.sidebar {
-  width: 250px;
-  height: calc(100vh - 40px); /* Adjust based on header height */
-  padding: 10px;
-  border-right: 1px solid #ccc;
-  overflow-y: auto;
-  transition: transform 0.3s ease;
-  
   
   .add_new_doc{
     padding: 10px;
-    width:100%;
-    margin-right: 10px;
-    margin-bottom:5px;
+    width:96%;
+    margin: 5px;
     border: 2px dashed #aaa8a8 ;
     background-color: #FFFFFF;
     color: rgba(0, 0, 0, 0.895);
@@ -531,6 +521,18 @@ onMounted(() => {
   .add_new_doc:active {
   transform: scale(0.80); /* 当按钮被点击时，缩小到原来的95% */
   }
+  
+
+.sidebar {
+  width: 250px;
+  height: calc(90vh - 40px); /* Adjust based on header height */
+  padding: 10px;
+  border-right: 1px solid #ccc;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  
+  
+  
 
 
   h3 {
@@ -771,7 +773,7 @@ onMounted(() => {
       position:relative;
       box-sizing: content-box;
       transition: 0.2s ease-in-out;
-      padding: 3px 8px;
+      padding: 3px 4px;
       border-radius: 5px;
 
     }
@@ -799,7 +801,7 @@ onMounted(() => {
       border-radius: 5px;
       left:10px;
       transition: 0.2s ease-in-out;
-      padding: 3px 8px;
+      padding: 3px 4px;
     }
    
   }

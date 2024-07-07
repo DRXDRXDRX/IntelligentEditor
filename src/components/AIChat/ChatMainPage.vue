@@ -1,15 +1,19 @@
 <template>
     <div class="root">
         <div class="container" >
-            <h5>无界智灵<i class="ri-message-3-line"></i></h5>
-            <button @click="clearChat">清空聊天</button>
-            <div class="chatArea">
+            <h5>无界智灵<i class="ri-bard-line"></i></h5>
+            <el-popconfirm title="确认清空吗？" confirm-button-text="确认" cancel-button-text="手滑了" cancel-button-type="info" @confirm="clearChat" >
+                <template #reference>
+                    <button :disabled="length === 0" class="clear" :class="length === 0 ? 'disabled' : ''">清空聊天</button>
+                </template>
+            </el-popconfirm>
+            <div class="chatArea" ref="chatArea">
                 <div class="emptyShow" v-show="length === 0">
-                    快来和我聊天吧！<i class="ri-chat-1-line"></i>
+                    快来和我聊天吧！<i class="ri-bard-line"></i>
                 </div>
                 <div :class="'chat-' + section.identity" v-for="section of chatRecords" :key="section.id">
                     <img :src="section.identity === 'user' ? 'public/user_avatar/1.png' : 'public/user_avatar/1.png'" alt="头像" />
-                    <span>{{ section.content }}</span>
+                    <span v-html="formatContent(section.content)"></span>
                 </div>
             </div>
             <div class="magic-column">
@@ -33,14 +37,14 @@
                 </el-tooltip>
             </div>
             <div class="input" :class="{focus: focused, lighter: focused}">
-                <textarea type="textarea" @focus="focused = true" @blur="focused = false" placeholder="请输入问题..." v-model="textInput" />
+                <textarea type="textarea" @focus="focused = true" @blur="focused = false" @keydown="handleEnter" placeholder="请输入问题..." v-model="textInput" />
                 <div class="selection">
                     <a-dropdown>
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 8L10.8103 10.1897L13 11L10.8103 11.8103L10 14L9.18973 11.8103L7 11L9.18973 10.1897L10 8Z" fill="currentColor"></path><path d="M13 3L13.5402 4.45982L15 5L13.5402 5.54018L13 7L12.4598 5.54018L11 5L12.4598 4.45982L13 3Z" fill="currentColor"></path><path d="M3.5 1L4.17523 2.82477L6 3.5L4.17523 4.17523L3.5 6L2.82477 4.17523L1 3.5L2.82477 2.82477L3.5 1Z" fill="currentColor"></path><path d="M3.14284 13.2583L9.64284 1.99998" stroke="currentColor" stroke-width="1.3" stroke-linecap="square"></path></svg>
                         <template #overlay>
                             <a-menu @click="handleChoose">
                                 <a-menu-item v-for="item of promptMenuItems" :key="item.key" :title="item.title">
-                                    <i :class= "'ri-' + item.icon" style="font-size:small; margin-right:10px;" :style="'color:' + item.color"></i>
+                                    <i :class= "'ri-' + item.icon" style="font-size:small; margin-right:10px;"></i>
                                     <span>{{ item.title.split('-')[0] }}</span>
                                 </a-menu-item>
                             </a-menu>
@@ -49,8 +53,6 @@
                     <el-tooltip effect="light" content="发送" placement="top">
                         <i class="ri-send-plane-fill" @click="send"></i>
                     </el-tooltip>
-                    
-
                 </div>
             </div>
         </div>
@@ -58,8 +60,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, inject } from 'vue'
+import { ref, reactive, computed, inject, watch,watchEffect, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useSelectionStore } from '@/store/index.ts'
 import http from '@/utils/request.ts'
 import { OCRRequest } from '@/api/index.ts'
 import html2canvas from 'html2canvas';
@@ -145,24 +148,21 @@ const createInput = (fileType, apiAddress) => {
     return fileInput;
 }
 
-
-
-
-const screenShotInfo = inject('screenShotInfo')
-const {x, y, width, height, active} = screenShotInfo
-// const x = inject('x')
-// const y = inject('y')
-// const width = inject('width')
-// const height = inject('height')
-// const active = inject
 const captureArea = async () => {
   const canvas = await html2canvas(document.documentElement, {
-    x: x.value,
-    y: y.value,
-    width: width.value,
-    height: height.value,
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 200,
   });
   const dataUrl = canvas.toDataURL();
+  console.log(dataUrl);
+//   展示出来
+  const img = new Image();
+    img.src = dataUrl;
+    document.body.appendChild(img);
+
+  
   const file = await dataURLtoFile(dataUrl, 'OCR.png');
   console.log(file);
   // 这里可以处理 file 对象，例如上传到服务器
@@ -212,15 +212,20 @@ const uploadAudio = () => {
 const system_prompt = ref('你是一个人工智能助手，可以根据我输入的文字返回一些信息')
 // prompt的List
 const promptMenuItems = ref([
-    { key: '1', title: '润色-请对以下文本进行润色，确保语言流畅、用词精准、语法正确;请在润色后的文本保持原意不变，同时改进表达方式，使其更加严谨，科学，大方',color: 'green', icon: 'flashlight-fill' },
-    { key: '2', title: '续写-请对以下文本进行续写，确保续写内容与原文风格一致，符合主题连贯，语言流畅的要求。',color: 'yellow', icon: 'flashlight-fill' },
-    { key: '3', title: '翻译-请将以下中文文本翻译为英文文本，使用准确、流畅的语言；你只需要返回翻译后的文本。',color: 'red', icon: 'flashlight-fill' },
-    { key: '4', title: '文档排版-请对以下文本进行格式排版，使其结构清晰、段落分明、标题明显。确保每个段落之间有适当的空行，标题使用加粗字体，并将列表项适当缩进。保持原意不变，同时改进排版方式，使其更易于阅读。',color: 'blue', icon: 'flashlight-fill' },
+    { key: '1', title: '润色-请对以下文本进行润色，确保语言流畅、用词精准、语法正确;请在润色后的文本保持原意不变，同时改进表达方式，使其更加严谨，科学，大方',color: 'green', icon: 'magic-line' },
+    { key: '2', title: '续写-请对以下文本进行续写，确保续写内容与原文风格一致，符合主题连贯，语言流畅的要求。',color: 'yellow', icon: 'edit-line' },
+    { key: '3', title: '翻译-请将以下中文文本翻译为英文文本，使用准确、流畅的语言；你只需要返回翻译后的文本。',color: 'red', icon: 'translate' },
+    { key: '4', title: '文档排版-请对以下文本进行格式排版，使其结构清晰、段落分明、标题明显。确保每个段落之间有适当的空行，标题使用加粗字体，并将列表项适当缩进。保持原意不变，同时改进排版方式，使其更易于阅读。',color: 'blue', icon: 'file-list-3-line' },
     // { key: '5', title: '纠正语法错误', color: 'purple', icon: 'flashlight-fill' },
     // { key: '6', title: '续写',color: 'pink', icon: 'flashlight-fill'}
 ])
 // 输入框的内容
+const selectionStore = useSelectionStore()
+
 const textInput = ref<string>('')
+watchEffect(() => {
+    textInput.value = selectionStore.selection
+})
 const chosenPrompt = ref<string>('')
 // 选择prompt方法
 const handleChoose = ({ item, key }: { item: string, key: string }) => {
@@ -233,34 +238,141 @@ const handleChoose = ({ item, key }: { item: string, key: string }) => {
     // textInput.value = '/ ' + item.title.split('-')[0] + '\n'
 }
 
+// 滚动到聊天框底部
+const chatArea = ref(null)
+const scrollToBottom = () => {
+    nextTick(() => {
+        if (chatArea) {
+            chatArea.value.scrollTop = chatArea.value.scrollHeight
+        }
+    })
+}
+
+// 监听 chatRecords 变化
+watch(chatRecords, scrollToBottom, { deep: true })
+
+const formatContent = (content) => {
+    // 将换行符替换为 <br> 标签
+    return content.replace(/\n/g, '<br>');
+}
 
 // 输入框的发送按钮
 const send = async () => {
-    const user_prompt = textInput.value
+    const user_prompt = textInput.value.trim()
     textInput.value = ''
+    if(user_prompt === '') {
+        ElMessage.warning('不能输入为空')
+        return
+    }
     console.log(user_prompt);
     chatRecords.push({
         id: length.value + 1,
         identity: 'user',
-        content: user_prompt
+        content: user_prompt,
+        system_prompt: system_prompt.value
     })
     console.log(system_prompt.value)
+
+    // try {
+    //     const res = await http.request({
+    //         url: '/ai/generate',
+    //         method: 'POST',
+    //         data: {
+    //             user_prompt,
+    //             system_prompt: system_prompt.value
+    //         },
+    //         timeout: 20000
+    //     })
+    //     chatRecords.push({
+    //         id: length.value + 1,
+    //         identity: 'ai',
+    //         content: res.data
+    //     })
+    //     console.log(res)
+    //     ElMessage.success(textInput.value)
+    //     ElMessage.success(res.msg)
+    //     ElMessage.success(res.data)
+    // } catch (error) {
+    //     ElMessage.error('请求失败')
+    //     console.log(error)
+    // }
+    const sentMessages = []
+    if(length.value === 1) {
+        sentMessages.push({
+            system_prompt: system_prompt.value,
+            role: chatRecords.at(-1).identity,
+            text: user_prompt
+        })
+    } else if(length.value > 1 && length.value < 6){
+        for(let i = 0; i < length.value; i++) {
+            sentMessages.push({
+                system_prompt: chatRecords.at(i).system_prompt,
+                role: chatRecords.at(i).identity === 'user' ? 'user' : 'assistant',
+                text: chatRecords.at(i).content
+            })
+        }
+    } else {
+        for(let i = length.value - 5; i < length.value; i++) {
+            sentMessages.push({
+                system_prompt: chatRecords.at(i).system_prompt,
+                role: chatRecords.at(i).identity === 'user' ? 'user' : 'assistant',
+                text: chatRecords.at(i).content
+            })
+        }
+    }
+    console.log(sentMessages)
+
     try {
         const res = await http.request({
-            url: '/ai/generate',
+            url: '/ai/stream',
             method: 'POST',
-            data: {
-                user_prompt,
-                system_prompt: system_prompt.value
-            },
+            data: [...sentMessages],
             timeout: 20000
         })
+        console.log(res.data)
+        // SSE:
+        const eventSource = new EventSource(`https://firlin.cn/api/v1/ai/stream?id=${res.data}`,{ withCredentials: true })
+        // 发送请求：
+        console.log(eventSource)
+        eventSource.onopen = () => {
+            console.log('连接已建立')
+        };
+        // console.log(eventSource)
+
         chatRecords.push({
             id: length.value + 1,
             identity: 'ai',
-            content: res.data
+            content: '',
+            system_prompt: system_prompt.value
         })
-        console.log(res)
+        eventSource.onmessage = (event) => {
+            console.log(event.data)
+            // console.log(JSON.parse(event.data))
+            // console.log(1)
+            // 每个字延迟20ms加入：
+            let timer = setInterval(() => {
+                if(event.data === '') {
+                    chatRecords.at(-1).content += ' '
+                    clearInterval(timer)
+                }
+                chatRecords.at(-1).content += event.data
+                console.log(chatRecords.at(-1).content)
+                clearInterval(timer)
+            }, 20)
+            // chatRecords.at(-1).content += JSON.parse(event.data).data
+            
+        }
+        eventSource.onerror = (event) => {
+            console.log(event)
+            console.log('连接已断开')
+            eventSource.close()
+        }
+        // chatRecords.push({
+        //     id: length.value + 1,
+        //     identity: 'ai',
+        //     content: res.data
+        // })
+        // console.log(res)
         // ElMessage.success(textInput.value)
         // ElMessage.success(res.msg)
         // ElMessage.success(res.data)
@@ -268,16 +380,25 @@ const send = async () => {
         ElMessage.error('请求失败')
         console.log(error)
     }
+
+
+    
+
 }
 
-
+const handleEnter = (e) => {
+    if(e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        send()
+    }
+}
 
 </script>
 
 <style lang="scss" scoped>
 .root {
     // background-color:#F7F7F7;
-    height: 60%;
+    height: 61%;
     margin:5px;
     margin-left:0;
     padding:5px;
@@ -297,18 +418,19 @@ const send = async () => {
         h5 {
             position: absolute;
             top: 1%;
-            font-weight:700;
+            font-size:16px;
+            letter-spacing: 0.1em;
             text-align:center;
             i {
                 color: #8A57EA;
             }
         }
 
-        h5+button {
+        .clear {
             position: absolute;
             top: 1.5%;
             right: 1%;
-            font-size: 10px;
+            font-size: 9px;
             cursor:pointer;
             color:#959595;
             transition: all .3s ease-in-out;
@@ -372,7 +494,7 @@ const send = async () => {
                     background-color: #F7F7F7;
                     padding: 5px;
                     font-size:12px;
-                    letter-spacing:1px;
+                    letter-spacing: 0.05em;
                     border-radius: 6px;
                     border: 1px solid #F7F7F7;
                     box-shadow: 0 0 5px 1px rgba(85, 85, 85, 0.1);
@@ -384,6 +506,7 @@ const send = async () => {
                     scrollbar-color: #C6C6C6 #F7F7F7;
                     scrollbar-width: 2px;
                     transition: all .3s ease-in-out;
+                    animation: fade .5s ease-in-out;
                 }
             }
 
@@ -396,6 +519,15 @@ const send = async () => {
                 flex-direction: row-reverse;
                 justify-content:flex-start;
             }
+
+            @keyframes fade {
+                0% {
+                    opacity: 0;
+                }
+                100% {
+                    opacity: 1;
+                }
+            }
         }
 
         .magic-column {
@@ -406,9 +538,9 @@ const send = async () => {
             justify-content:flex-end;
             align-items:center;
             // margin-right:5px;
-            border: 2px dotted grey;
+            // border: 2px dotted grey;
             border-radius: 6px;
-            margin: 5px 0;
+            // margin: 5px 0;
 
             .hint {
                 position: absolute;
@@ -580,5 +712,13 @@ button {
   top: 0;
   right: 0;
   z-index: 10;
+}
+
+.disabled {
+    cursor: not-allowed;
+    color: #C6C6C6;
+    &:hover {
+        color: #C6C6C6;
+    }
 }
 </style>
