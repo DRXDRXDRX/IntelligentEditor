@@ -48,12 +48,14 @@ import CommonForm from '@/components/CommonForm.vue'
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useRouter } from 'vue-router';
+import { useUserInfoStore } from '@/store'
 import http from '@/utils/request.ts';
 const router = useRouter();
 const loginInfo = ref({
   username: '',
   password: '',
 });
+const userInfoStore = useUserInfoStore()
 const login = () => {
   // 执行登录逻辑
   http.request({
@@ -65,12 +67,21 @@ const login = () => {
         },
   }).then((res) => {
     if(res.code == 0) {
-        router.push('/edit'); // 登录成功后跳转到编辑页面
+        http.request({
+            url: '/user/me',
+            method: 'get',
+            }).then((res) => {
+                userInfoStore.setUserName(res.data.user_name)
+                userInfoStore.setAvatar(res.data.avatar)
+                userInfoStore.setVip(res.data.vip)
+                userInfoStore.setEmail(res.data.mail)
+        });
         ElMessage({
             message: '登陆成功!',
             type: 'success',
             plain: true,
         });
+        router.push('/edit'); // 登录成功后跳转到编辑页面
     } else {
         ElMessage.error(res.msg);
     }

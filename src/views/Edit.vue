@@ -12,19 +12,31 @@
           <i class="ri-sun-fill"></i>
         </template>
       </el-switch> -->
-      <el-tooltip class="box-item" effect="dark" :content="showRight ? '收起大纲' : '展开大纲'" placement="bottom">
+      <div class="docTitle">
+        <input type="text" v-model="title">
+      </div>
+      <el-tooltip class="box-item2" effect="dark" :content="showRight ? '收起右侧' : '展开右侧'" placement="bottom">
         <i :class="showRight ? 'ri-indent-increase' : 'ri-indent-decrease'" @click="toggleRight"></i>
       </el-tooltip>
     </div>
-      <left-sidebar />
+      <left-sidebar @uploadDoc="uploadDoc" @deleteDoc="deleteDoc" />
     <div class="editor" :class="{ extensionLeft: !showLeft, shrinkLeft: showLeft, extensionRight: !showRight, shrinkRight: showRight }">
       <!-- <generic-menu /> -->
       <div class="editorCard" :class="{bothShrink: (!showLeft && !showRight)}">
         <div class="topTools">
-          <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue" />
+          <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue" @showSearch="show_search_replace = true" @showMindmap="generateMindmap" @showResourceArchive="showResourceArchive" />
+          <transition name="fade" >
+            <div class="search_replace" v-show="show_search_replace">
+              <input type="text" v-model="searchTerm" placeholder="搜索" />
+              <input type="text" v-model="replaceTerm" placeholder="替换" />
+              <el-button type="primary" size="small" @click="search()">搜索全部</el-button>
+              <el-button type="primary" size="small" @click="replaceAll()">全部替换</el-button>
+              <el-button type="primary" size="small" @click="close()">关闭</el-button>
+            </div>
+          </transition>
         </div>
         <div class="editContent">
-          <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
+          <!-- <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
             <div class="bubble-menu">  
               <a-dropdown v-for="item of characterMenuList" :key="item.key">
                   <button @click="editor.chain().focus().toggleBold().run()"
@@ -41,7 +53,7 @@
                   </template>
               </a-dropdown>     
             </div>
-          </bubble-menu>
+          </bubble-menu> -->
           <dialog ref="dialog" @blur="dialog.close()"><polish-options></polish-options></dialog>
           <EditorContent style="margin: 8px;  overflow-y: auto; height: 100%;" :editor="editor" />
         </div>
@@ -56,19 +68,66 @@
     </div>
     <div class="rightTools" :class="{ hiddenRight: !showRight, extraRight: !showLeft }">
       <Outline :editor="editor" @heading-click="handleHeadingClick" />
-      <chat-main-page></chat-main-page>
+      <chat-main-page @toggleChatSize="toggleChatSize">
+        <template #icon>
+          <el-tooltip effect="light" content="放大" placement="top">
+            <i class="ri-fullscreen-line" @click="openChatPageDialog"></i>
+          </el-tooltip>
+        </template>
+      </chat-main-page>
     </div>
-    
+    <el-dialog v-model="mindmapVisible" @close="closeMindmap" width="65%" top="5vh" modal="true" :show-close="false" @open="() => {ElMessage({message: '开始AI生成思维导图', type:'success'})}">
+      <template #header="{ close, titleId, titleClass }">
+        <div class="my-header">
+          <div class="left">
+            <el-button type="primary" size="small" @click="insertSvg">
+              插入思维导图到文档
+            </el-button>
+            <el-button type="success" size="small" @click="exportSvg">
+              导出思维导图
+            </el-button>
+            <div :id="titleId" :class="titleClass" >AI生成思维导图</div>
+          </div>
+
+          <el-button type="danger" size="small" @click="close">
+            关闭思维导图
+          </el-button>
+        </div>
+      </template>
+      <markup-demo ref="markmap"></markup-demo>
+    </el-dialog>  
+    <el-dialog class="chatDialog" v-model="chatPageFullScreen" width="75%" top="5vh" style="{height: 80vh}" :show-close="true" title="AI聊天">
+      <chat-main-page>
+        <template #icon>
+          <el-tooltip effect="light" content="关闭" placement="right">
+            <i class="ri-close-circle-line" @click="closeChatPageDialog"></i>
+          </el-tooltip>
+        </template>
+      </chat-main-page>
+    </el-dialog>
+    <el-dialog class="resourceDialog" v-model="resourceArchiveVisible" :show-close="false" width="75%" top="5vh" modal="true" title="资源库" >
+      <template #header="{ close, titleId, titleClass }">
+        <div class="my-header">
+          <h4 :id="titleId" :class="titleClass">资源库</h4>
+          <el-button type="danger" @click="close">关闭</el-button>
+        </div>
+      </template>
+      <resource-archive :update_resource_list="resourceArchiveVisible" ></resource-archive>
+    </el-dialog>  
   </div>
 </template>
 
 <script lang="ts" setup>
-import { defineComponent, onMounted, onBeforeUnmount, ref, watch, provide, getCurrentInstance  } from 'vue';
+import { defineComponent, onMounted, onUpdated, onBeforeUnmount, ref, watch, watchEffect, provide, getCurrentInstance  } from 'vue';
 import { Editor, EditorContent, useEditor, BubbleMenu } from '@tiptap/vue-3';
 import { storeToRefs } from 'pinia'
+import { useSocketStore } from '@/store'
 import Underline from '@tiptap/extension-underline'
 // import Italic from '@tiptap/extension-italic'
 import TextAlign from '@tiptap/extension-text-align'
+import Document from '@tiptap/extension-document'
+import Paragraph from '@tiptap/extension-paragraph'
+import Text from '@tiptap/extension-text'
 
 // 列表
 import ListItem from '@tiptap/extension-list-item'
@@ -106,10 +165,13 @@ import Dropcursor from '@tiptap/extension-dropcursor';
 import { Color } from '@tiptap/extension-color';
 import TextStyle from '@tiptap/extension-text-style';
 import FontFamily from '@tiptap/extension-font-family';
+import Typography from "@tiptap/extension-typography";
+import Youtube from '@tiptap/extension-youtube'
+import Blockquote from '@tiptap/extension-blockquote'
 
 
 // 使用Pinia
-import { useEditorStore, useSelectionStore } from '@/store'
+import { useEditorStore, useSelectionStore, useDocIdStore, useMarkdownStore } from '@/store'
 import { filesStore } from '@/store';
 import EditorMenu from '../components/EditorMenu/index.vue'
 import { defineStore } from 'pinia'
@@ -118,9 +180,19 @@ import { ElMessage } from 'element-plus';
 import Outline from '../components/Outline.vue'
 import PolishOptions from '../components/PolishOptions.vue'
 import ChatMainPage from '../components/AIChat/ChatMainPage.vue'
+import ResourceArchive from '../components/ResourceArchive.vue'
 import LeftSidebar from '../components/LeftSidebar.vue'
 import http from '@/utils/request.ts'
+import SearchAndReplace from "@sereneinserenade/tiptap-search-and-replace";
+import markupDemo from '@/components/Markmap.vue'
+import MarkdownIt from 'markdown-it'
+import TurndownService from 'turndown'
 
+const md = new MarkdownIt()
+const turndownService = new TurndownService()
+
+const markdownStore = useMarkdownStore()
+const docIdStore = useDocIdStore()
 const selectionStore = useSelectionStore()
 const fileStore = filesStore()
 // 主题色切换：
@@ -180,30 +252,35 @@ const loadHeadings = () => {
 
 
 // WenSocket:
-const { appContext } = getCurrentInstance();
-const socket = appContext.config.globalProperties.$socket;
-// 发送数据
+let socket = new WebSocket('https://firlin.cn/api/v1/docws');
+const connect = () => {
+  socket = new WebSocket('https://firlin.cn/api/v1/docws');
+  socket.addEventListener('open', handleOpen);
+  socket.addEventListener('message', handleMessage);
+  socket.addEventListener('close', handleClose);
+  socket.addEventListener('error', handleError);
+}
 
+// 发送数据
 const dataToSend = ref({
   id: "668616147448aeceb9f229bd",
-  title: 'title',
   json: {
     key: "",
   },
+  html: ''
 });
 
 const sendData = () => {
-  if (socket.readyState === WebSocket.OPEN) {
-    console.log("发送数据：", dataToSend.value);
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    console.log('发送数据：', dataToSend.value);
     // 将JavaScript对象转换为JSON字符串
     const message = JSON.stringify(dataToSend.value);
     socket.send(message); // 发送消息
-    
   } else {
+    console.log(socket)
     console.error('WebSocket 连接未打开或已关闭。');
   }
 };
-
 
 const font = ref('Arial')
 
@@ -212,6 +289,9 @@ const font = ref('Arial')
 const editor = useEditor({
   content: '',
   extensions: [
+    Document,
+    Paragraph,
+    Text,
     StarterKit,
     TaskList,
     TaskItem,
@@ -268,11 +348,16 @@ const editor = useEditor({
     FontFamily.configure({
       types: ['textStyle'],
     }),
-
+    SearchAndReplace.configure(),
+    Typography,
+    Youtube,
+    Blockquote,
   ],
   onUpdate({ editor }) {
     
     editorStore.setEditorInstance(editor.value)
+    // 实时将编辑器内容解析markdown
+   
     // http.request({
     //   url: '/doc',
     //   method: 'POST',
@@ -288,6 +373,8 @@ const editor = useEditor({
     // WebSocket进行实时保存：
     // 发送数据的方法
     dataToSend.value.json.key = JSON.stringify(editor.getJSON())
+    dataToSend.value.html = editor.getHTML()
+    dataToSend.value.id = docIdStore.docId
     sendData()
     // socket.send(dataToSend.value)
     loadHeadings()
@@ -296,23 +383,46 @@ const editor = useEditor({
   async onCreate({ editor }) {
 
     editorStore.setEditorInstance(editor.value)
-    const listResult = await http.request({
-      url: '/doc/list',
-      method: 'GET'
-    })
-    console.log(listResult.data.docs)
-    const id = listResult.data.docs[0].id
 
-    const docResult = await http.request({
-      url: '/doc',
-      method: 'GET',
-      params:{
-        id
+    // 添加粘贴监听
+    editor.view.dom.addEventListener('paste', () => {
+      // console.log(editor.getHTML())
+      // console.log(turndownService.turndown(editor.getHTML()))
+      // 去除所有的\
+      // console.log(turndownService.turndown(editor.getHTML()).replaceAll(/\\/g, ''))
+      editor.commands.setContent(md.render(turndownService.turndown(editor.getHTML()).replaceAll(/\\/g, '')))
+      // console.log(md.render(turndownService.turndown(editor.getHTML())))
+      loadHeadings()
+    });
+    
+    watchEffect(() => {
+      if(docIdStore.docId){
+        http.request({
+          url: '/doc',
+          method: 'GET',
+          params:{
+            id: docIdStore.docId
+          }
+        }).then(docResult => {
+          // console.log(docResult.data)
+          // console.log(docResult.data.json)
+          console.log(docResult.data.json)
+          editor.commands.setContent(JSON.parse(docResult.data.json.key))
+          loadHeadings()
+        }).catch(error => {
+          console.log(error)
+        })
       }
     })
-    console.log(docResult)
-    editor.commands.setContent(JSON.parse(docResult.data.json.key))
-    loadHeadings()
+    // const docResult = await http.request({
+    //   url: '/doc',
+    //   method: 'GET',
+    //   params:{
+    //     docIdStore.docId
+    //   }
+    // })
+    // console.log(docResult)
+    // editor.commands.setContent(JSON.parse(docResult.data.json.key))
   
 },
   onSelectionUpdate({ editor }) {
@@ -445,9 +555,336 @@ const imageMenuList = [
   }
 ]
 
+const title = ref(docIdStore.docTitle)
+watch(title, (newVal) => {
+  docIdStore.setDocTitle(newVal)
+  // console.log(docIdStore.docTitle)
+})
+watchEffect(() => {
+  title.value = docIdStore.docTitle
+  if(docIdStore.docId){
+    http.request({
+      url: '/doc',
+      method: 'POST',
+      data: {
+        id: docIdStore.docId,
+        title: docIdStore.docTitle
+      }
+    }).then(res => {
+      // console.log(res)
+    })  
+  }
+})
+
+const show_search_replace = ref(false);
+const searchTerm = ref<string>('');
+
+const replaceTerm = ref<string>('');
+
+const caseSensitive = ref<boolean>(false);
+
+const updateSearchReplace = (clearIndex: boolean = false) => {
+  if (!editor.value) return;
+
+  if (clearIndex) editor.value.commands.resetIndex();
+
+  editor.value.commands.setSearchTerm(searchTerm.value);
+  editor.value.commands.setReplaceTerm(replaceTerm.value);
+  editor.value.commands.setCaseSensitive(caseSensitive.value);
+}
+
+const clear = () => {
+  searchTerm.value = replaceTerm.value = "";
+  editor.value.commands.resetIndex();
+};
+
+let temp = []
+
+
+watch(
+  () => searchTerm.value.trim(),
+  (val, oldVal) => {
+    if (!val) clear();
+    if (val !== oldVal) updateSearchReplace(true);
+    const { results, resultIndex } = editor.value.storage.searchAndReplace;
+    temp = [...results]
+  }
+);
+
+watch(
+  () => replaceTerm.value.trim(),
+  (val, oldVal) => (val === oldVal ? null : updateSearchReplace())
+);
+
+watch(
+  () => caseSensitive.value,
+  (val, oldVal) => (val === oldVal ? null : updateSearchReplace(true))
+);
+
+
+const search = () => {
+  if (!editor.value) return;
+  if (!searchTerm.value) {
+    ElMessage.warning('搜索内容不能为空');
+    return;
+  };
+  const { results, resultIndex } = editor.value.storage.searchAndReplace;
+  console.log(results)
+  if(results.length === 0) {
+    ElMessage.warning('未找到匹配项');
+    return;
+  }
+  temp = [...results]
+  console.log(resultIndex)
+  // 把所有搜索结果高亮：
+  results.forEach((result) => {
+    editor.value.commands.setTextSelection(result);
+    editor.value.chain().focus().setHighlight().run();
+  });
+
+}
+
+const replaceAll = () => {
+  if (!editor.value) return;
+
+  editor.value.commands.replaceAll();
+  console.log(temp)
+  // 去掉所有高亮
+  temp.forEach((result) => {
+    editor.value.commands.setTextSelection(result);
+    editor.value.chain().focus().unsetHighlight().run();
+  });
+}
+
+const close = () => {
+  show_search_replace.value = false;
+  searchTerm.value = ''
+  replaceTerm.value = ''
+  // 去掉所有高亮
+  temp.forEach((result) => {
+    editor.value.commands.setTextSelection(result);
+    editor.value.chain().focus().unsetHighlight().run();
+  });
+}
+
+const handleOpen = () => {
+  console.log('WebSocket 连接已打开。');
+};
+
+const handleMessage = (event) => {
+  console.log('收到消息:', event.data);
+};
+
+const handleClose = (e) => {
+  console.log('WebSocket 连接已关闭。', e);
+  let timer = setTimeout(() => {
+    socket.removeEventListener('open', handleOpen);
+    socket.removeEventListener('message', handleMessage);
+    socket.removeEventListener('close', handleClose);
+    socket.removeEventListener('error', handleError);
+    console.log('尝试重新连接');
+    connect()
+    clearInterval(timer)
+  }, 1000)
+};
+
+const handleError = (error) => {
+  console.error('WebSocket 出现错误:', error);
+};
+
+
+// 思维导图：
+const markmap = ref(null)
+const mindmapVisible = ref(false)
+const closeMindmap = () => {
+  markdownStore.setMarkdown('')
+  console.log(markdownStore.markdown)
+}
+const generateMindmap = () => {
+  console.log(editor.value.getHTML())
+  mindmapVisible.value = true
+  http.request({
+    url: '/ai/stream',
+    method: 'POST',
+    data:[
+      {
+        role: 'user',
+        text: '请将以下 HTML 内容转换为 Markdown 格式的大纲，重点关注标题和列表结构。请不要包含正文详细内容、链接、图片等非结构化信息。只需输出 Markdown 标记，如标题、列表等，以便直接转为思维导图:' + editor.value.getHTML()
+      }
+    ],
+  }).then(res => {
+    console.log(res.data)
+    const eventSource = new EventSource(`https://firlin.cn/api/v1/ai/stream/line?id=${res.data}`,{ withCredentials: true })
+    // 发送请求：
+    console.log(eventSource)
+    eventSource.onopen = () => {
+        console.log('连接已建立')
+    };
+    eventSource.onmessage = (event) => {
+      const section = JSON.parse(event.data).data
+      console.log(section)
+      markdownStore.setMarkdown(markdownStore.markdown + section)
+    }
+    eventSource.onerror = (event) => {
+        console.log(event)
+        console.log('连接已断开')
+        
+        eventSource.close()
+        ElMessage({
+          message: '思维导图生成成功',
+          type: 'success'
+        })
+    }
+    // markdownContent.value = res.data.markdown
+    // markdownStore.setMarkdown(res.data.markdown)
+    // console.log(markdownContent.value)
+  })
+}
+
+const insertSvg = () => {
+  const svg = markmap.value.svgRef;
+  if (!svg) {
+    console.error('SVG element not found');
+    return;
+  }
+
+  // 获取 SVG 的实际大小
+  const rect = svg.getBoundingClientRect();
+  const width = rect.width;
+  const height = rect.height;
+
+  // 设置 SVG 的宽度和高度属性（如果没有）
+  svg.setAttribute('width', width);
+  svg.setAttribute('height', height);
+
+  try {
+    const svgString = new XMLSerializer().serializeToString(svg);
+    console.log('Serialized SVG:', svgString);
+
+    const encodedData = window.btoa(unescape(encodeURIComponent(svgString)));
+    console.log('Encoded Data:', encodedData);
+
+    const img = new window.Image();
+    img.src = `data:image/svg+xml;base64,${encodedData}`;
+
+    img.onload = () => {
+      console.log('Image loaded');
+
+      const dpr = window.devicePixelRatio || 1;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      if (ctx) {
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // 高质量绘制选项
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        const imgBase64 = canvas.toDataURL('image/png');
+        console.log('Base64 Image:', imgBase64);
+
+        canvas.toBlob(function(blob) {
+          console.log('Blob data:', blob);
+          const file = new File([blob], `${docIdStore.docTitle}_mindmap.png`, { type: 'image/png' });
+          const formData = new FormData();
+          formData.append('file', file);
+          http.request({
+            url: '/file/upload',
+            method: 'POST',
+            data: formData,
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          }).then(res => {
+            console.log(res.data.file_link);
+            editor.value?.chain().focus().setImage({ src: res.data.file_link }).run();
+            ElMessage({
+              message: '思维导图插入成功',
+              type: 'success'
+            });
+          }).catch(err => {
+            console.error('Upload error:', err);
+          });
+        }, 'image/png');
+
+      } else {
+        console.error('Failed to get canvas context');
+      }
+    };
+
+    img.onerror = (error) => {
+      console.error('Image load error:', error);
+    };
+
+  } catch (error) {
+    console.error('Error serializing SVG:', error);
+  }
+};
+
+const exportSvg = async () => {
+  const svg = markmap.value.svgRef
+  if(!svg) return 
+  const svgString = new XMLSerializer().serializeToString(svg)
+  // 转成blob对象
+  const blob = new Blob([svgString], { type: 'image/svg+xml' })
+  // 下载
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${docIdStore.docTitle}_mindmap.svg`
+  a.click()
+  URL.revokeObjectURL(url)
+  a.remove()
+}
+
+
+const uploadDoc = (content) => {
+  editor.value?.chain().focus().setContent(md.render(content)).run()
+  loadHeadings()
+  http.request({
+    url: '/doc',
+    method: 'POST',
+    data: {
+      id: docIdStore.docId,
+      json: {
+        key: JSON.stringify(editor.value.getJSON())
+      },
+      html: editor.value.getHTML()
+    },
+  }).then(res => {
+    console.log(res.data)
+  })
+  console.log('成功')
+}
+
+const deleteDoc = () => {
+  editor.value?.chain().focus().setContent('').run()
+}
+
+
+
+const chatPageFullScreen = ref(false)
+const openChatPageDialog = () => {
+  chatPageFullScreen.value = true
+}
+const closeChatPageDialog = () => {
+  chatPageFullScreen.value = false
+}
+
+
+const resourceArchiveVisible = ref(false)
+const showResourceArchive = () => {
+  resourceArchiveVisible.value = true
+}
 
 
 onMounted(() => {
+
   if (editor.value) {
     editorStore.setEditorInstance(editor.value)
     loadHeadings()
@@ -473,28 +910,10 @@ onMounted(() => {
   })
 
 
-  // 监听连接打开事件
-  socket.addEventListener('open', () => {
-    // connectionStatus.value = '已连接';
-    console.log('WebSocket 连接已打开。')
-  });
-
-  // 监听消息事件
-  socket.addEventListener('message', (event) => {
-    console.log('收到消息:', event.data);
-  });
-
-  // 监听错误事件
-  socket.addEventListener('error', (error) => {
-    console.error('WebSocket 出现错误:', error);
-    // connectionStatus.value = '连接出错';
-  });
-
-  // 监听连接关闭事件
-  socket.addEventListener('close', () => {
-    // connectionStatus.value = '已断开连接';
-    console.log('WebSocket 连接已关闭。')
-  });
+  socket.addEventListener('open', handleOpen);
+  socket.addEventListener('message', handleMessage);
+  socket.addEventListener('close', handleClose);
+  socket.addEventListener('error', handleError);
 });
 
 
@@ -503,78 +922,13 @@ onMounted(() => {
 onBeforeUnmount(() => {
   editor.value?.destroy();
 
-  if (socket) {
-    socket.close();
-    console.log('WebSocket 连接已关闭close。')
-  }
+  socket.removeEventListener('open', handleOpen);
+  socket.removeEventListener('message', handleMessage);
+  socket.removeEventListener('close', handleClose);
+  socket.removeEventListener('error', handleError);
 });
 
 
-
-//toolbox
-// 定义一个常量来控制工具箱是否应该显示
-const shouldShowToolbox = true;
-  const showToolbox = ref(false);
-  const toolboxStyle = ref({
-    position: 'absolute',
-    top: '0px',
-    left: '0px',
-    display: 'none'
-  });
-
-  const showModelList = ref(false);
-  
-  const checkSelection = (event) => {
-    const selection = window.getSelection();
-    if (selection && selection.toString().length > 0) {
-      console.log('选中了文本');
-      if (shouldShowToolbox) {
-        showToolbox.value = true;
-        toolboxStyle.value = {
-          position: 'relative',
-          top: `${event.pageY-120}px`,
-          left: `${Math.max(event.pageX-500,0)}px`,
-        };
-        console.log(event.pageY);
-        console.log(event.pageX);
-
-      }
-    } else {
-      showToolbox.value = false;
-    }
-  };
-  
-  const hideToolbox = () => {
-    showToolbox.value = false;
-    showModelList.value = false;
-  };
-  
-  const toggleModelList = () => {
-    showModelList.value = !showModelList.value;
-    console.log("showModelList"+showModelList.value);
-
-  };
-  
-  const modelAction = () => {
-    console.log('模型按钮点击');
-  };
-  
-  const continueWriting = () => {
-    console.log('续写按钮点击');
-  };
-  
-  const polishText = () => {
-    console.log('润色按钮点击');
-  };
-  
-  const askQuestion = () => {
-    console.log('提问按钮点击');
-  };
-  
-  const selectModel = (model) => {
-    console.log(`选择了模型: ${model}`);
-    showModelList.value = false;
-  };
 
 
 </script>
@@ -750,6 +1104,7 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .header-bar {
@@ -765,6 +1120,31 @@ body {
   display: flex;
   justify-content:space-between;
   align-items:center;
+  gap: 10px;
+
+  .docTitle {
+    position: absolute;
+    width: 210px;
+    height: 35px;
+    left:40px;
+    input {
+      width:100%;
+      font-size:18px;
+      padding: 5px;
+      font-weight: normal;
+      height:100%;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      outline:none; 
+      transition: border .3s ease-in-out;
+      /* text-decoration: underline */
+      &:focus {
+        border-color: #409EFF;
+        
+      }
+    }
+  }
+
 }
 
 .header-bar i {
@@ -781,7 +1161,7 @@ body {
   /* border-right: 1px solid #fff; */
   /* background-color: hsla(0, 17%, 78%, 0.158); */
   /* box-shadow: 0px 0px 5px #fff inset; */
-  height: 100%;
+  height: 94vh;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -789,7 +1169,7 @@ body {
 }
 
 .rightTools {
-  height: 100%;
+  height: 94vh;
   width: 100%;
   overflow-y: auto;
   transition: all .5s ease-in-out;
@@ -799,7 +1179,7 @@ body {
 .editor {
   /* background-color: #e6f6f9; */
   /* box-shadow: 1px 0 20px 10px #fff; */
-  height: 100%;
+  height: 94vh;
   /* width: 100%; */
   transition: all .5s ease-in-out;
 }
@@ -818,6 +1198,43 @@ body {
 .topTools {
   height: fit-content;
   margin-bottom: 10px;
+  position: relative;
+}
+
+.topTools .search_replace {
+  width: 250px;
+  height: 60px;
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  bottom: -40px;
+  right: 0;
+  z-index:10;
+  input {
+    width: 120px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0 5px;
+    margin-right: 5px;
+    outline: none;
+    border: 1px solid transparent;
+    transition: all .3s ease-in-out;
+    &:focus {
+        border-color: #409EFF;
+    }
+  }
+}
+
+/* 定义淡入淡出的效果 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
+}
+.fade-enter-from, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+  opacity: 0;
+}
+.fade-enter-to, .fade-leave-from {
+  opacity: 1;
 }
 
 .editContent {
@@ -853,6 +1270,12 @@ body {
   .tiptap {
     height: 100%;
     overflow-y: auto;
+  }
+
+  .tiptap blockquote {
+    margin-left: 0;
+    padding-left: 0.5em;
+    border-left: 2px solid #ccc; /* 竖线样式 */
   }
 }
 
@@ -910,6 +1333,81 @@ body {
       font-weight: 700;
     }
   }
+}
+
+
+.my-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+
+  .left {
+    display:flex;
+    align-items: center;
+    flex:1;
+    margin-right:130px;
+
+    div {
+      flex:1;
+      font-size:22px;
+      font-weight: 700;
+      text-align:center;
+    }
+  }
+}
+
+.ri-fullscreen-line {
+  cursor:pointer;
+  font-size: 16px;
+  border-radius: 5px;
+  padding:1px 3px 0;
+  transition: all .3s ease-in-out;
+  &:hover {
+      background-color: #E5E5E5;
+  }
+}
+
+.ri-close-circle-line {
+  cursor:pointer;
+  font-size: 20px;
+  border-radius: 5px;
+  padding:1px 5px 0;
+  transition: all .3s ease-in-out;
+  &:hover {
+      background-color: #E5E5E5;
+  }
+}
+
+.chatDialog{
+  height:600px;
+  padding: 0;
+  .el-dialog__header {
+    display: none !important;
+  }
+  .el-dialog__body {
+    height:600px;
+
+    .root {
+      height: 100%;
+    }
+
+    .root .container .charArea {
+        width:96% !important;
+        height: 70% !important;
+    }
+  }
+}
+
+.resourceDialog {
+  height:600px;
+  /* padding: 0; */
+  .el-dialog__header {
+    padding-bottom: 0 !important;
+  }
+  /* .el-dialog__body {
+    height:600px;
+  } */
 }
 
 

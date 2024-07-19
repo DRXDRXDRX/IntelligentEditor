@@ -39,7 +39,7 @@ const routes = [
         path: '/help',
         name: 'help',
         component: () => import('../views/help.vue')
-    }
+    },
 ] as RouteRecordRaw[];
 
 const router = createRouter({

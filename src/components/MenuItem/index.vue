@@ -8,7 +8,7 @@
         <el-select v-model="font" v-if="props.title === '字体'">
             <el-option v-for="item in family" :key="item" :label="item" :value="item" />
         </el-select>
-        <input type="file" v-if="props.title === '本地图片'" @change="getFiles">
+        <!-- <input type="file" v-if="props.title === '本地图片'" @change="getFiles"> -->
         <svg class="remix">
             <use :xlink:href="`${remixiconUrl}#ri-${props.icon}`" />
         </svg>
@@ -44,7 +44,7 @@ watch(size, (newVal) => {
     emits('changeFontSize', newVal)
 })
 
-const family = ['宋体', '黑体', '楷体', '微软雅黑', '等线', '行楷' ,'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia', 'Impact', 'Lucida Console', 'Lucida Sans Unicode', 'Palatino Linotype', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana']
+const family = ['宋体', '黑体', '楷体', '微软雅黑', '等线', 'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 'Georgia', 'Impact', 'Lucida Console', 'Lucida Sans Unicode', 'Palatino Linotype', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana']
 const font = ref('Arial')
 watch(font, (newVal:string) => {
     emits('changeFontFamily', newVal)

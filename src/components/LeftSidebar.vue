@@ -1,68 +1,99 @@
 <script setup>
 import router from '@/router';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watchEffect, computed } from 'vue';
+import http from '@/utils/request.ts';
+import { useDocIdStore, useUserInfoStore } from '@/store'
+import { ElMessage, ElMessageBox } from 'element-plus';
+
+const docIdStore = useDocIdStore()
+const userInfoStore = useUserInfoStore()
 
 const props = defineProps(['showLeft'])
+const emit = defineEmits(['uploadDoc', 'deleteDoc'])
 
-const avatarUrl = ref('1.png');
 const isSidebarOpen = ref(true);
-const user_plan =ref("Professional plan")
 
-
-const user_email= ref("lizjingstudy@gmail.com")
 // 需要将handleClick 改成handletitleClick
-const handleClick = (title) => {
-  console.log(title);
-};
-const truncateTitle = (title) => {
+
+const truncateTitle = (title = '未命名文档') => {
   const maxLength = 20; // 根据需要调整截断长度
   return title.length > maxLength ? title.slice(0, maxLength) + '...' : title;
 };
 const starredHistory = ref([
-  { id: 100, title: 'Vue.js Overview and Help' },
-  { id: 2000, title: 'Hall Sensor Wiring Instructions' },
-  { id: 300, title: 'South Korean customer' },
-  { id: 400, title: 'Unity 2D UPR Tutorial' },
-  { id: 500, title: 'Unity URP模版游戏光照' },
+  // { id: 100, title: 'Vue.js Overview and Help' },
+  // { id: 2000, title: 'Hall Sensor Wiring Instructions' },
+  // { id: 300, title: 'South Korean customer' },
+  // { id: 400, title: 'Unity 2D UPR Tutorial' },
+  // { id: 500, title: 'Unity URP模版游戏光照' },
 ]);
+
+const starredLength = computed(() => {
+  return starredHistory.value.length;
+})
 
 
 const todayHistory = ref([
-  { id: 10, title: 'Vue.js Overview and Help' },
-  { id: 20, title: 'Hall Sensor Wiring Instructions' },
-  { id: 30, title: 'South Korean customer' },
-  { id: 40, title: 'Unity 2D UPR Tutorial' },
-  { id: 50, title: 'Unity URP模版游戏光照' },
+  // { id: 10, title: 'Vue.js Overview and Help' },
+  // { id: 20, title: 'Hall Sensor Wiring Instructions' },
+  // { id: 30, title: 'South Korean customer' },
+  // { id: 40, title: 'Unity 2D UPR Tutorial' },
+  // { id: 50, title: 'Unity URP模版游戏光照' },
 ]);
 
 
 const yesterdayHistory = ref([
-  { id: 6000, title: 'Vision AI Service Integration' },
-  { id: 7000, title: 'Image OCR and AI Generation' },
-  { id: 8001, title: 'Speech Conversion and Response' },
-  { id: 90000, title: 'AI Model Request Summary' },
-  { id: 100000, title: 'Generate RAG Model Title' },
-  { id: 111, title: 'Sort Embeddings by Similarity' },
-  { id: 121, title: 'Topk Text Retrieval Function' },
-  { id: 131, title: 'Unity2D 地图变暗效果' },
-  { id: 141, title: 'Developing 2D Action Game' },
-  { id: 151, title: 'Unity 2D Player Platform Integration' },
-  { id: 161, title: 'AI生成服务响应调整' },
+  // { id: 6000, title: 'Vision AI Service Integration' },
+  // { id: 7000, title: 'Image OCR and AI Generation' },
+  // { id: 8001, title: 'Speech Conversion and Response' },
+  // { id: 90000, title: 'AI Model Request Summary' },
+  // { id: 100000, title: 'Generate RAG Model Title' },
+  // { id: 111, title: 'Sort Embeddings by Similarity' },
+  // { id: 121, title: 'Topk Text Retrieval Function' },
+  // { id: 131, title: 'Unity2D 地图变暗效果' },
+  // { id: 141, title: 'Developing 2D Action Game' },
+  // { id: 151, title: 'Unity 2D Player Platform Integration' },
+  // { id: 161, title: 'AI生成服务响应调整' },
 ]);
 
 const weekHistory = ref([
-  { id: 172, title: '设置音频语言' },
-  { id: 182, title: '处理长音频文件' },
-  { id: 192, title: 'Convert Audio to Text' },
-  { id: 202, title: 'Ethical Risks of Digital Technology' },
-  { id: 212, title: 'Research Outline for Report' },
-  { id: 222, title: 'SpeechToText Interface' },
-  { id: 232, title: 'Recognize Language Decode' },
-  { id: 242, title: 'Recognize Language, Decode' },
-  { id: 252, title: 'ADC Payload Activity Prediction' },
-  { id: 262, title: 'File path issue' },
-  { id: 272, title: 'Translate Service Request' },
+  // { id: 172, title: '设置音频语言' },
+  // { id: 182, title: '处理长音频文件' },
+  // { id: 192, title: 'Convert Audio to Text' },
+  // { id: 202, title: 'Ethical Risks of Digital Technology' },
+  // { id: 212, title: 'Research Outline for Report' },
+  // { id: 222, title: 'SpeechToText Interface' },
+  // { id: 232, title: 'Recognize Language Decode' },
+  // { id: 242, title: 'Recognize Language, Decode' },
+  // { id: 252, title: 'ADC Payload Activity Prediction' },
+  // { id: 262, title: 'File path issue' },
+  // { id: 272, title: 'Translate Service Request' },
 ]);
+
+const updateDocList = () => {
+  http.request({
+    url: '/doc/list',
+    method: 'get',
+  }).then((res) => {
+    starredHistory.value = res.data.docs.starred ?? []
+    todayHistory.value = res.data.docs.today ?? []
+    yesterdayHistory.value = res.data.docs.yesterday ?? []
+    weekHistory.value = res.data.docs.week ?? []
+    // console.log(res.data.docs);
+  });
+}
+
+const handleClick = (id, title) => {
+  docIdStore.setDocId(id)
+  docIdStore.setDocTitle(title)
+  watchEffect(() => {
+    if(docIdStore.docTitle){
+      updateDocList()
+    }
+  })
+  // console.log(docIdStore.docId)
+  // console.log(id);
+  // console.log(title)
+};
 
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
@@ -77,8 +108,69 @@ const hoveredItem_history_starred = ref(null);
 const myElementRef = ref(null);
 const activeContent = ref('profile');
 const add_new_doc_handler = () => {
+  ElMessageBox.prompt('请输入文档名：', '提示', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消'
+  }).then(({ value }) => {
+    http.request({
+      url: '/doc',
+      method: 'POST',
+      data: {
+        title: value,
+      }
+    }).then(res => {
+      console.log(res)
+      ElMessage({
+        type: 'success',
+        message: res.msg + '：' + res.data.title,
+      })
+      handleClick(res.data.id, res.data.title)
+      updateDocList()
+      // todayHistory.value.push({ id: todayHistory.value.length+1  , title: truncateTitle('Unity URP模版游戏光照') }); // 使用unshift而不是push来从列表的前面添加
+    })
+  })
+  .catch(() => {
+    ElMessage({
+      type: 'info',
+      message: '操作已取消',
+    })
+  })
   console.log(todayHistory.value.length)
-  todayHistory.value.push({ id: todayHistory.value.length+1  , title: truncateTitle('Unity URP模版游戏光照') }); // 使用unshift而不是push来从列表的前面添加
+  
+};
+const upload_doc_handler = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.md';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    console.log(file.name);
+    // 读取
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const res = await http.request({
+        url: '/doc',
+        method: 'POST',
+        data: {
+          title: file.name
+        } 
+      })
+      console.log(res)
+      ElMessage({
+        type: 'success',
+        message: '上传成功',
+      })
+      updateDocList()
+      handleClick(res.data.id, file.name)
+      emit('uploadDoc', e.target.result)
+      // console.log(e.target.result);
+    };
+    reader.readAsText(file);
+  }
+  input.click();
+  input.remove()
 };
 const hoveredItem_history = ref(null);
 // 定义要被删除的文件的list_id
@@ -93,47 +185,91 @@ const Set_to_be_delected_file_title_and_column_name=(tempt_id_name,tempt_column_
   To_be_delected_column_name.value = tempt_column_name
 }
 
+const deleteFile = id => {
+  http.request({
+    url: `/doc`,
+    method: 'delete',
+    params: {
+      id
+    }
+  }).then(res => {
+    console.log(res)
+    ElMessage({
+      type: 'success',
+      message: '删除成功',
+    })
+    docIdStore.setDocId('')
+    docIdStore.setDocTitle('')
+    emit('deleteDoc')
+    updateDocList()
+  })
+}
 
 
 
 const delet_doc_handler = () => {
-  
   if (To_be_delected_column_name.value == '今天') {
     console.log('delete today doc' + To_be_delected_file_list_id.value);
-    todayHistory.value = todayHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
+    deleteFile(To_be_delected_file_list_id.value)
+    // todayHistory.value = todayHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
   } else if (To_be_delected_column_name.value == '昨天') {
     console.log('delete yesterday doc');
-    yesterdayHistory.value = yesterdayHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
+    deleteFile(To_be_delected_file_list_id.value)
+    // yesterdayHistory.value = yesterdayHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
   } else if (To_be_delected_column_name.value == 'senven_days') {
     console.log('delete week doc');
-    weekHistory.value = weekHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
+    deleteFile(To_be_delected_file_list_id.value)
+    // weekHistory.value = weekHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
   } else if (To_be_delected_column_name.value == '星标') {
     console.log('delete starred doc');
-    starredHistory.value = starredHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
+    deleteFile(To_be_delected_file_list_id.value)
+    // starredHistory.value = starredHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
   }
-
 };
 
 const Add_to_started = (id, column_name) => {
+  http.request({
+    url: '/doc',
+    method: 'post',
+    data: {
+      id,
+      starred: true
+    }
+  }).then(res => {
+    console.log(res)
+    updateDocList()
+  })
   console.log('add to started' + id + column_name)
-  if(column_name == '今天'){
-    let value = todayHistory.value.find(item => item.id === id)?.title;
-    starredHistory.value.push({ id: id, title: truncateTitle(value) });
-  }else if(column_name == '昨天'){
-    let value = yesterdayHistory.value.find(item => item.id === id)?.title;
-    starredHistory.value.push({ id: id, title: truncateTitle(value) });
-  }else if(column_name == 'senven_days'){
-    let value = weekHistory.value.find(item => item.id === id)?.title;
-    starredHistory.value.push({ id: id, title: truncateTitle(value) });
-  }
+  // if(column_name == '今天'){
+  //   let value = todayHistory.value.find(item => item.id === id)?.title;
+  //   starredHistory.value.push({ id: id, title: truncateTitle(value) });
+  // }else if(column_name == '昨天'){
+  //   let value = yesterdayHistory.value.find(item => item.id === id)?.title;
+  //   starredHistory.value.push({ id: id, title: truncateTitle(value) });
+  // }else if(column_name == 'senven_days'){
+  //   let value = weekHistory.value.find(item => item.id === id)?.title;
+  //   starredHistory.value.push({ id: id, title: truncateTitle(value) });
+  // }
 };
 
 const Removefrom_star = (id) => {
   console.log('remove from star' + id)
-  let value = starredHistory.value.find(item => item.id === id)?.title;
-  starredHistory.value = starredHistory.value.filter(item => item.id !== id);
-  todayHistory.value.push({ id: id, title: truncateTitle(value) });
+  // let value = starredHistory.value.find(item => item.id === id)?.title;
+  // starredHistory.value = starredHistory.value.filter(item => item.id !== id);
+  // todayHistory.value.push({ id: id, title: truncateTitle(value) });
+  http.request({
+    url: '/doc',
+    method: 'post',
+    data: {
+      id,
+      starred: false
+    }
+  }).then(res => {
+    console.log(res)
+    updateDocList()
+  })
 };
+
 
 
 onMounted(() => {
@@ -143,8 +279,8 @@ onMounted(() => {
       e.stopPropagation();
     });
   }
-});
-
+  updateDocList();
+})
 </script>
 
 
@@ -159,31 +295,38 @@ onMounted(() => {
       </button>
   </div> -->
   <div class="left_sidebar"   :class="{ 'sidebar_closed': !isSidebarOpen, hidden: props.showLeft }">
-    <button class="add_new_doc" @click="add_new_doc_handler">
-      新&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;建
-    </button>
+    <div class="buttons">
+      <button class="add_new_doc" @click="add_new_doc_handler">
+        新&nbsp;&nbsp;&nbsp;建
+      </button>
+      <button class="upload_doc" @click="upload_doc_handler">
+        上&nbsp;&nbsp;&nbsp;传
+      </button>
+    </div>
     <div :class="['sidebar']" ref="sidebar">
       
       <div class="starred" >
         <h3>收藏</h3>
-        <div class="starred_item">
-          <span v-if="starredHistory==[]">Star projects and files you use often</span>
-            <transition-group name="list" tag="ul">
-                <li v-for="item in starredHistory" :key="item.id" class="list_item">
-                  <div class="button_container"  @mouseover="hoveredItem_history_starred = item.id " @mouseleave="hoveredItem_history_starred = null">
-                    <button @click="handleClick(item.title)">{{ truncateTitle(item.title) }}</button>
-                    <div class="action_buttons"  v-if="hoveredItem_history_starred === item.id">
-                      <button @click="Removefrom_star(item.id)"><i class="ri-star-fill"></i></button>
-                      <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'星标');Comfirm_dialog_refer.showModal()">
-                        <i class="ri-delete-bin-6-line"></i>
-                      </button>
-                    </div>
-                  </div> 
-                </li> 
-              
-            </transition-group>
-          
-        </div>
+        <transition name="fade" >
+          <div class="starred_item" v-show="starredLength !== 0" >
+            <span v-if="starredHistory==[]">Star projects and files you use often</span>
+              <transition-group name="list" tag="ul">
+                  <li v-for="item in starredHistory" :key="item.id" class="list_item">
+                    <el-tooltip effect="light" :content=item.title placement="right">
+                      <div class="button_container"  @mouseover="hoveredItem_history_starred = item.id " @mouseleave="hoveredItem_history_starred = null" :class="{active: item.id == docIdStore.docId}">
+                        <button @click="handleClick(item.id, item.title)">{{ truncateTitle(item.title) }}</button>
+                        <div class="action_buttons"  v-if="true">
+                          <button @click="Removefrom_star(item.id)"><i class="ri-star-fill"></i></button>
+                          <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'星标');Comfirm_dialog_refer.showModal()">
+                            <i class="ri-delete-bin-6-line"></i>
+                          </button>
+                        </div>
+                      </div> 
+                    </el-tooltip>
+                  </li> 
+              </transition-group>
+          </div>
+        </transition>
       </div>
 
       <div class="history">
@@ -192,45 +335,51 @@ onMounted(() => {
         <transition-group name="list" tag="ul">
 
           <li v-for="item in todayHistory.slice().reverse()" :key="item.id">
-            <div class="button_container"  @mouseover="hoveredItem_history = item.id" @mouseleave="hoveredItem_history = null">
-              <button @click="handleClick(item.title)">{{ truncateTitle(item.title) }}</button>
-              <div class="action_buttons"  v-if="hoveredItem_history === item.id">
-                <button @click="Add_to_started(item.id,'今天');Set_to_be_delected_file_title_and_column_name(item.id,'今天');delet_doc_handler()"><i class="ri-star-line"></i></button>
-                <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'今天');Comfirm_dialog_refer.showModal();">
-                  <i class="ri-delete-bin-6-line"></i>
-                </button>
+            <el-tooltip effect="light" :content=item.title placement="right">
+              <div class="button_container"  @mouseover="hoveredItem_history = item.id" @mouseleave="hoveredItem_history = null" :class="{active: item.id == docIdStore.docId}">
+                <button @click="handleClick(item.id, item.title)">{{ truncateTitle(item.title) }}</button>
+                <div class="action_buttons"  v-if="hoveredItem_history === item.id">
+                  <button @click="Add_to_started(item.id,'今天');delet_doc_handler()"><i class="ri-star-line"></i></button>
+                  <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'今天');Comfirm_dialog_refer.showModal();">
+                    <i class="ri-delete-bin-6-line"></i>
+                  </button>
+                </div>
               </div>
-            </div>
+            </el-tooltip>
           </li>        
         </transition-group>
         
         <h3>昨天</h3>
         <transition-group name="list" tag="ul">
           <li v-for="item in yesterdayHistory.slice().reverse()" :key="item.id">
-            <div class="button_container"  @mouseover="hoveredItem_history = item.id" @mouseleave="hoveredItem_history = null">
-              <button @click="handleClick(item.title)">{{ truncateTitle(item.title) }}</button>
-              <div class="action_buttons"  v-if="hoveredItem_history === item.id">
-                <button @click="Add_to_started(item.id,'昨天');Set_to_be_delected_file_title_and_column_name(item.id,'昨天');delet_doc_handler()"><i class="ri-star-line"></i></button>
-                <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'昨天');Comfirm_dialog_refer.showModal()">
-                  <i class="ri-delete-bin-6-line"></i>
-                </button>
+            <el-tooltip effect="light" :content=item.title placement="right">
+              <div class="button_container"  @mouseover="hoveredItem_history = item.id" @mouseleave="hoveredItem_history = null" :class="{active: item.id == docIdStore.docId}">
+                <button @click="handleClick(item.id, item.title)">{{ truncateTitle(item.title) }}</button>
+                <div class="action_buttons"  v-if="hoveredItem_history === item.id">
+                  <button @click="Add_to_started(item.id,'昨天');delet_doc_handler()"><i class="ri-star-line"></i></button>
+                  <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'昨天');Comfirm_dialog_refer.showModal()">
+                    <i class="ri-delete-bin-6-line"></i>
+                  </button>
+                </div>
               </div>
-            </div>
+            </el-tooltip>
           </li>  
         </transition-group>
            
         <h3>senven_days</h3>
         <transition-group name="list" tag="ul"> 
           <li v-for="item in weekHistory.slice().reverse()" :key="item.id">
-            <div class="button_container"  @mouseover="hoveredItem_history= item.id" @mouseleave="hoveredItem_history = null">
-              <button @click="handleClick(item.title)">{{ truncateTitle(item.title) }}</button>
-              <div class="action_buttons"  v-if="hoveredItem_history === item.id">
-                <button @click="Add_to_started(item.id,'senven_days');Set_to_be_delected_file_title_and_column_name(item.id,'senven_days');delet_doc_handler()"><i class="ri-star-line"></i></button>
-                <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'senven_days');Comfirm_dialog_refer.showModal()">
-                  <i class="ri-delete-bin-6-line"></i>
-                </button>
+            <el-tooltip effect="light" :content=item.title placement="right">
+              <div class="button_container"  @mouseover="hoveredItem_history= item.id" @mouseleave="hoveredItem_history = null">
+                <button @click="handleClick(item.id, item.title)">{{ truncateTitle(item.title) }}</button>
+                <div class="action_buttons"  v-if="hoveredItem_history === item.id">
+                  <button @click="Add_to_started(item.id,'senven_days');delet_doc_handler()"><i class="ri-star-line"></i></button>
+                  <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'senven_days');Comfirm_dialog_refer.showModal()">
+                    <i class="ri-delete-bin-6-line"></i>
+                  </button>
+                </div>
               </div>
-            </div>
+            </el-tooltip>
           </li>  
         </transition-group>
 
@@ -244,10 +393,13 @@ onMounted(() => {
     </div>
     <!-- 添加左下角的元素 -->
     <div class="account_info">
-      <button class="account_plan" style="padding:8px 4px 4px 8px; margin:0px;">{{user_plan}}</button>
+      <button class="account_plan" style="padding:8px 4px 4px 8px; margin:0px;">{{userInfoStore.userInfo.vip ? 'Professional plan' : 'Free plan'}}</button>
       <div class="account_email"  @click="Account_dialog_refer.showModal()" >
-        <img class="avatar" :src="'/public/user_avatar/' + avatarUrl">
-        <span>{{user_email}}</span>
+        <img class="avatar" :src="userInfoStore.userInfo.avatar">
+        <div class="info">
+          <span>{{userInfoStore.userInfo.username}}</span>
+          <span>{{userInfoStore.userInfo.email}}</span>
+        </div>
       </div>
 
       <div class="help_and_settings">
@@ -457,6 +609,11 @@ onMounted(() => {
   //   margin: 0; /* 移除默认的边距 */
   // }
 
+  .active {
+    background-color: #d8d8d8;
+    border-radius: 10px;
+  }
+
 
 .left_sidebar {
   width:250px;
@@ -502,9 +659,9 @@ onMounted(() => {
 
 
   
-  .add_new_doc{
+  .add_new_doc, .upload_doc{
     padding: 10px;
-    width:96%;
+    width:45%;
     margin: 5px;
     border: 2px dashed #aaa8a8 ;
     background-color: #FFFFFF;
@@ -514,18 +671,19 @@ onMounted(() => {
     font-size:16px;
     cursor: pointer;
     transition: 0.2s ease-in-out;
-  }
-  .add_new_doc:hover {
-    background-color: #d7d6ce;
-  }
-  .add_new_doc:active {
-  transform: scale(0.80); /* 当按钮被点击时，缩小到原来的95% */
+
+    &:hover {
+      background-color: #d7d6ce;
+    }
+    &:active {
+    transform: scale(0.80); /* 当按钮被点击时，缩小到原来的95% */
+    }
   }
   
 
 .sidebar {
   width: 250px;
-  height: calc(90vh - 40px); /* Adjust based on header height */
+  height: calc(90vh - 175px); /* Adjust based on header height */
   padding: 10px;
   border-right: 1px solid #ccc;
   overflow-y: auto;
@@ -559,19 +717,33 @@ onMounted(() => {
   
 
   .starred {
+    button {
+      margin:0;
+    }
+
+    /* 定义淡入淡出的效果 */
+    .fade-enter-active, .fade-leave-active {
+      transition: opacity 0.3s;
+    }
+    .fade-enter-from, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+      opacity: 0;
+    }
+    .fade-enter-to, .fade-leave-from {
+      opacity: 1;
+    }
 
     .starred_item {
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        height:100%;
+        height:80%;
         padding: 4px 2px;
         width: 100%;
         background-color: transparent;
         border: 2px dashed #ccc;
         border-radius: 8px;
         cursor: pointer;
-        transition: background-color 0.3s, border-color 0.3s;
+        transition: background-color .3s, border-color .3s;
         position: relative;
 
         .button_container{
@@ -579,8 +751,11 @@ onMounted(() => {
           justify-content: flex-end;
           position:relative;
           align-items: center;
+          height:80%;
           width:100%;
+          transition: all .3s ease-in-out;
           .action_buttons{
+            margin-right:3px;
             display: flex;
             position: absolute;
             button{
@@ -608,7 +783,6 @@ onMounted(() => {
         li{
           display: flex;
           align-items: center;
-          margin-bottom: 8px;
           background-color: #fff;
           border-radius: 4px;
           cursor: pointer;
@@ -638,6 +812,7 @@ onMounted(() => {
 
 
 .history {
+  height:60%;
   .button_container{
     display:flex;
     justify-content: flex-end;
@@ -646,6 +821,7 @@ onMounted(() => {
     .action_buttons{
     display:flex;
     position: absolute;
+    transition: all .3s ease-in-out;
     button{
       font-size:15px;
       padding:1px;
@@ -670,9 +846,6 @@ onMounted(() => {
   ul{
     list-style: none;
     padding: 0;
-  }
-  li {
-    margin-bottom: 5px;
   }
 
   .history_button {
@@ -743,6 +916,19 @@ onMounted(() => {
     border-radius: 50%;
     background-size: cover;
     background-position: center;
+    }
+
+    .info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      font-size: 15px;
+      color: #333;
+
+      & span:last-child {
+        font-size:11px;
+      }
     }
   }
   

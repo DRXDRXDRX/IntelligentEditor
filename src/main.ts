@@ -13,6 +13,7 @@ import Antd from 'ant-design-vue';
 
 
 import 'element-plus/dist/index.css'
+import zhCn from 'element-plus/es/locale/lang/zh-cn';  // 引入中文语言包
 import { createI18n } from 'vue-i18n';// 引入 i18n 配置
 
 const messages = {
@@ -32,13 +33,15 @@ const pinia = createPinia()
 app.use(router)
 app.use(pinia)
 app.use(Antd);
-app.use(ElementPlus)
+app.use(ElementPlus, {
+  locale: zhCn, // 设置 element-plus 的默认语言
+})
 // 使用 i18n 插件
 app.use(i18n);
-app.use(vueNativeWebSocket, 'https://firlin.cn/api/v1/docws', {
-  format: 'json',
-  reconnection: true, // 自动重连
-  reconnectionAttempts: 5, // 重连次数
-  reconnectionDelay: 3000 // 重连间隔时间
-})
+// app.use(vueNativeWebSocket, 'https://firlin.cn/api/v1/docws', {
+//   format: 'json',
+//   reconnection: true, // 自动重连
+//   reconnectionAttempts: Infinity, // 重连次数
+//   reconnectionDelay: 2000 // 重连间隔时间
+// })
 app.mount('#app')
