@@ -49,7 +49,7 @@
       <div class="video_text_content">
         <h1>Introducing Boundless IntelligentEditor</h1>
         <p>Creating realistic text by AI </p>
-        <button @click="learnMore">Learn more</button>
+        <button @click="StartHere">从此开始</button>
       </div>
       
     </div>
@@ -129,7 +129,7 @@
               <div class="content">
                 <h1>{{ slide.title }}</h1>
                 <p>{{ slide.description }}</p>
-                <button @click="learnMore">了解更多</button>
+                <button @click="StartHere">了解更多</button>
               </div>
             </div>
           </div>
@@ -246,9 +246,10 @@ import { ref, onMounted, onUnmounted } from 'vue';
    clearInterval(intervalId);
  };
  
- const learnMore = () => {
-   alert('了解更多内容');
- };
+ const StartHere = () => {
+  //进行cookie检查，也就是如果用户登陆过了，并且保质期还在，就直接进入edit页面。否则就跳转到登陆页面？
+  alert("Start Here");
+};
  
  onMounted(() => {
    startCarousel();
@@ -879,7 +880,7 @@ main {
       font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     }
     button{
-      padding: 10px 20px;
+      padding: 15px 20px;
       font-size: 16px;
       background-color: rgba(0, 0, 0, 0.5);
       color: white;

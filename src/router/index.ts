@@ -39,7 +39,13 @@ const routes = [
         path: '/help',
         name: 'help',
         component: () => import('../views/help.vue')
+    },
+    {
+        path:'/article',
+        name:'article',
+        component: () => import('../views/article.vue')
     }
+    
 ] as RouteRecordRaw[];
 
 const router = createRouter({
