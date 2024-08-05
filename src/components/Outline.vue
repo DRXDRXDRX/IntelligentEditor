@@ -60,10 +60,14 @@ const scrollTarget = ref()
 
         .header {
             position:sticky;
+            top: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 5px 5px 0;
+            padding: 5px 5px 0px 0;
+            background-color: #fff;
+            z-index: 100;
+            border-bottom: 1px dashed #acacac;
         }
 
         i {

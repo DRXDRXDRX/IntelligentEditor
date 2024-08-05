@@ -3,6 +3,7 @@ import { h, ref,reactive, type Component, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import http from '@/utils/request.ts'
 
+
 export const mainStore = defineStore('main',{
   state:()=>{
     return {
@@ -309,8 +310,10 @@ export const useAIChatStore = defineStore('aiChat', () => {
           }
           eventSource.onerror = (event) => {
               console.log(event)
+              console.log(chatRecords.at(-1).content);
               console.log('连接已断开')
               eventSource.close()
+              
           }
           // chatRecords.push({
           //     id: length.value + 1,

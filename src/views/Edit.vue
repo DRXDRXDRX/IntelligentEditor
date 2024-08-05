@@ -1,42 +1,46 @@
 <template>
-  <div class="EditMain">
-    <div class="header-bar">
-      <el-tooltip class="box-item" effect="dark" :content="showLeft ? '收起左侧' : '展开左侧'" placement="bottom">
-        <i :class="showLeft ? 'ri-indent-decrease' : 'ri-indent-increase'" @click="toggleLeft"></i>
-      </el-tooltip>
-      <!-- <el-switch @change="handleSwitchTheme" v-model="themeValue" style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
+<div class="EditMain">
+  <div class="header-bar">
+    <el-tooltip class="box-item" effect="dark" :content="showLeft ? '收起左侧' : '展开左侧'" placement="bottom">
+      <i :class="showLeft ? 'ri-indent-decrease' : 'ri-indent-increase'" @click="toggleLeft"></i>
+    </el-tooltip>
+    <!-- <el-switch @change="handleSwitchTheme" v-model="themeValue" style="--el-switch-on-color: #2C2C2C; --el-switch-off-color: #FE887B">
         <template #active-action>
           <i class="ri-contrast-2-line"></i>
         </template>
-        <template #inactive-action>
+<template #inactive-action>
           <i class="ri-sun-fill"></i>
         </template>
-      </el-switch> -->
-      <div class="docTitle">
-        <input type="text" v-model="title">
-      </div>
-      <el-tooltip class="box-item2" effect="dark" :content="showRight ? '收起右侧' : '展开右侧'" placement="bottom">
-        <i :class="showRight ? 'ri-indent-increase' : 'ri-indent-decrease'" @click="toggleRight"></i>
-      </el-tooltip>
+</el-switch> -->
+    <div class="docTitle">
+      <input type="text" v-model="title">
     </div>
-      <left-sidebar @uploadDoc="uploadDoc" @deleteDoc="deleteDoc" />
-    <div class="editor" :class="{ extensionLeft: !showLeft, shrinkLeft: showLeft, extensionRight: !showRight, shrinkRight: showRight }">
-      <!-- <generic-menu /> -->
-      <div class="editorCard" :class="{bothShrink: (!showLeft && !showRight)}">
-        <div class="topTools">
-          <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue" @showSearch="show_search_replace = true" @showMindmap="generateMindmap" @showResourceArchive="showResourceArchive" />
-          <transition name="fade" >
-            <div class="search_replace" v-show="show_search_replace">
-              <input type="text" v-model="searchTerm" placeholder="搜索" />
-              <input type="text" v-model="replaceTerm" placeholder="替换" />
-              <el-button type="primary" size="small" @click="search()">搜索全部</el-button>
-              <el-button type="primary" size="small" @click="replaceAll()">全部替换</el-button>
-              <el-button type="primary" size="small" @click="close()">关闭</el-button>
-            </div>
-          </transition>
-        </div>
-        <div class="editContent">
-          <!-- <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
+    <el-tooltip class="box-item2" effect="dark" :content="showRight ? '收起右侧' : '展开右侧'" placement="bottom">
+      <i :class="showRight ? 'ri-indent-increase' : 'ri-indent-decrease'" @click="toggleRight"></i>
+    </el-tooltip>
+  </div>
+  <div class="leftTools" :class="{ hiddenLeft: !showLeft, show_left: showLeft}">
+    <left-sidebar @uploadDoc="uploadDoc" @deleteDoc="deleteDoc" />
+  </div>
+  <div class="editor" :class="{ recover: showLeft}">
+    <!-- <generic-menu /> -->
+    <div class="editorCard">
+      <div class="topTools">
+        <EditorMenu :editor="editor" v-model:font="font" :themeValue="themeValue"
+          @showSearch="show_search_replace = true" @showMindmap="generateMindmap"
+          @showResourceArchive="showResourceArchive" />
+        <transition name="fade">
+          <div class="search_replace" v-show="show_search_replace">
+            <input type="text" v-model="searchTerm" placeholder="搜索" />
+            <input type="text" v-model="replaceTerm" placeholder="替换" />
+            <el-button type="primary" size="small" @click="search()">搜索全部</el-button>
+            <el-button type="primary" size="small" @click="replaceAll()">全部替换</el-button>
+            <el-button type="primary" size="small" @click="close()">关闭</el-button>
+          </div>
+        </transition>
+      </div>
+      <div class="editContent">
+        <!-- <bubble-menu :editor="editor" :tippy-options="{ duration: 100 }" v-if="editor">
             <div class="bubble-menu">  
               <a-dropdown v-for="item of characterMenuList" :key="item.key">
                   <button @click="editor.chain().focus().toggleBold().run()"
@@ -54,71 +58,74 @@
               </a-dropdown>     
             </div>
           </bubble-menu> -->
-          <dialog ref="dialog" @blur="dialog.close()"><polish-options></polish-options></dialog>
-          <EditorContent style="margin: 8px;  overflow-y: auto; height: 100%;" :editor="editor" />
-        </div>
-        
-        <div class="bottomCount">
-          字数统计:
-          {{ editor?.storage.characterCount.characters() }}&nbsp;&nbsp;
-          当前字体为：
-          {{ font }}
-        </div>
+        <dialog ref="dialog" @blur="dialog.close()"><polish-options></polish-options></dialog>
+        <EditorContent style="margin: 8px;  overflow-y: auto; height: 100%;" :editor="editor" />
+      </div>
+
+      <div class="bottomCount">
+        字数统计:
+        {{ editor?.storage.characterCount.characters() }}&nbsp;&nbsp;
+        当前字体为：
+        {{ font }}
       </div>
     </div>
-    <div class="rightTools" :class="{ hiddenRight: !showRight, extraRight: !showLeft }">
-      <Outline :editor="editor" @heading-click="handleHeadingClick" />
-      <chat-main-page @toggleChatSize="toggleChatSize">
-        <template #icon>
-          <el-tooltip effect="light" content="放大" placement="top">
-            <i class="ri-fullscreen-line" @click="openChatPageDialog"></i>
-          </el-tooltip>
-        </template>
-      </chat-main-page>
-    </div>
-    <el-dialog v-model="mindmapVisible" @close="closeMindmap" width="65%" top="5vh" modal="true" :show-close="false" @open="() => {ElMessage({message: '开始AI生成思维导图', type:'success'})}">
-      <template #header="{ close, titleId, titleClass }">
-        <div class="my-header">
-          <div class="left">
-            <el-button type="primary" size="small" @click="insertSvg">
-              插入思维导图到文档
-            </el-button>
-            <el-button type="success" size="small" @click="exportSvg">
-              导出思维导图
-            </el-button>
-            <div :id="titleId" :class="titleClass" >AI生成思维导图</div>
-          </div>
-
-          <el-button type="danger" size="small" @click="close">
-            关闭思维导图
-          </el-button>
-        </div>
-      </template>
-      <markup-demo ref="markmap"></markup-demo>
-    </el-dialog>  
-    <el-dialog class="chatDialog" v-model="chatPageFullScreen" width="75%" top="5vh" style="{height: 80vh}" :show-close="true" title="AI聊天">
-      <chat-main-page>
-        <template #icon>
-          <el-tooltip effect="light" content="关闭" placement="right">
-            <i class="ri-close-circle-line" @click="closeChatPageDialog"></i>
-          </el-tooltip>
-        </template>
-      </chat-main-page>
-    </el-dialog>
-    <el-dialog class="resourceDialog" v-model="resourceArchiveVisible" :show-close="false" width="75%" top="5vh" modal="true" title="资源库" >
-      <template #header="{ close, titleId, titleClass }">
-        <div class="my-header">
-          <h4 :id="titleId" :class="titleClass">资源库</h4>
-          <el-button type="danger" @click="close">关闭</el-button>
-        </div>
-      </template>
-      <resource-archive :update_resource_list="resourceArchiveVisible" ></resource-archive>
-    </el-dialog>  
   </div>
+  <div class="rightTools" :class="{ hiddenRight: !showRight}">
+    <Outline :editor="editor" @heading-click="handleHeadingClick" />
+    <chat-main-page @toggleChatSize="toggleChatSize">
+      <template #icon>
+        <el-tooltip effect="light" content="放大" placement="top">
+          <i class="ri-fullscreen-line" @click="openChatPageDialog"></i>
+        </el-tooltip>
+      </template>
+    </chat-main-page>
+  </div>
+  <el-dialog v-model="mindmapVisible" @close="closeMindmap" width="65%" top="5vh" modal="true" :show-close="false"
+    @open="() => { ElMessage({ message: '开始AI生成思维导图', type: 'success' }) }">
+    <template #header="{ close, titleId, titleClass }">
+      <div class="my-header">
+        <div class="left">
+          <el-button type="primary" size="small" @click="insertSvg">
+            插入思维导图到文档
+          </el-button>
+          <el-button type="success" size="small" @click="exportSvg">
+            导出思维导图
+          </el-button>
+          <div :id="titleId" :class="titleClass">AI生成思维导图</div>
+        </div>
+
+        <el-button type="danger" size="small" @click="close">
+          关闭思维导图
+        </el-button>
+      </div>
+    </template>
+    <markup-demo ref="markmap"></markup-demo>
+  </el-dialog>
+  <el-dialog class="chatDialog" v-model="chatPageFullScreen" width="75%" top="5vh" style="{height: 80vh}"
+    :show-close="true" title="AI聊天">
+    <chat-main-page>
+      <template #icon>
+        <el-tooltip effect="light" content="关闭" placement="right">
+          <i class="ri-close-circle-line" @click="closeChatPageDialog"></i>
+        </el-tooltip>
+      </template>
+    </chat-main-page>
+  </el-dialog>
+  <el-dialog class="resourceDialog" v-model="resourceArchiveVisible" :show-close="false" width="75%" top="5vh"
+    modal="true" title="资源库">
+    <template #header="{ close, titleId, titleClass }">
+      <div class="my-header">
+        <h4 :id="titleId" :class="titleClass">资源库</h4>
+        <el-button type="danger" @click="close">关闭</el-button>
+      </div>
+    </template>
+    <resource-archive :update_resource_list="resourceArchiveVisible"></resource-archive>
+  </el-dialog>
+</div>
 </template>
 
 <script lang="ts" setup>
-import { defineComponent, onMounted, onUpdated, onBeforeUnmount, ref, watch, watchEffect, provide, getCurrentInstance  } from 'vue';
+import { defineComponent, onMounted, onUpdated, onBeforeUnmount, ref, watch, watchEffect, provide, getCurrentInstance } from 'vue';
 import { Editor, EditorContent, useEditor, BubbleMenu } from '@tiptap/vue-3';
 import { storeToRefs } from 'pinia'
 import { useSocketStore } from '@/store'
@@ -171,7 +178,7 @@ import Blockquote from '@tiptap/extension-blockquote'
 
 
 // 使用Pinia
-import { useEditorStore, useSelectionStore, useDocIdStore, useMarkdownStore } from '@/store'
+import { useEditorStore, useSelectionStore, useDocIdStore, useMarkdownStore, useUserInfoStore } from '@/store'
 import { filesStore } from '@/store';
 import EditorMenu from '../components/EditorMenu/index.vue'
 import { defineStore } from 'pinia'
@@ -191,6 +198,7 @@ import TurndownService from 'turndown'
 const md = new MarkdownIt()
 const turndownService = new TurndownService()
 
+const userInfoStore = useUserInfoStore()
 const markdownStore = useMarkdownStore()
 const docIdStore = useDocIdStore()
 const selectionStore = useSelectionStore()
@@ -354,10 +362,10 @@ const editor = useEditor({
     Blockquote,
   ],
   onUpdate({ editor }) {
-    
+
     editorStore.setEditorInstance(editor.value)
     // 实时将编辑器内容解析markdown
-   
+
     // http.request({
     //   url: '/doc',
     //   method: 'POST',
@@ -369,7 +377,7 @@ const editor = useEditor({
     //   console.log(res.data)
     // })
 
-    
+
     // WebSocket进行实时保存：
     // 发送数据的方法
     dataToSend.value.json.key = JSON.stringify(editor.getJSON())
@@ -378,7 +386,7 @@ const editor = useEditor({
     sendData()
     // socket.send(dataToSend.value)
     loadHeadings()
-    
+
   },
   async onCreate({ editor }) {
 
@@ -394,13 +402,13 @@ const editor = useEditor({
       // console.log(md.render(turndownService.turndown(editor.getHTML())))
       loadHeadings()
     });
-    
+
     watchEffect(() => {
-      if(docIdStore.docId){
+      if (docIdStore.docId) {
         http.request({
           url: '/doc',
           method: 'GET',
-          params:{
+          params: {
             id: docIdStore.docId
           }
         }).then(docResult => {
@@ -423,15 +431,15 @@ const editor = useEditor({
     // })
     // console.log(docResult)
     // editor.commands.setContent(JSON.parse(docResult.data.json.key))
-  
-},
+
+  },
   onSelectionUpdate({ editor }) {
     // console.log(1);
     // 判断选中的是不是图片
     const { from, to } = editor.state.selection
     // 获取选中内容
     const selectedText = editor.state.doc.textBetween(from, to)
-    console.log(selectedText) 
+    console.log(selectedText)
     selectionStore.setSelection(selectedText)
   },
 
@@ -562,7 +570,7 @@ watch(title, (newVal) => {
 })
 watchEffect(() => {
   title.value = docIdStore.docTitle
-  if(docIdStore.docId){
+  if (docIdStore.docId) {
     http.request({
       url: '/doc',
       method: 'POST',
@@ -572,7 +580,7 @@ watchEffect(() => {
       }
     }).then(res => {
       // console.log(res)
-    })  
+    })
   }
 })
 
@@ -630,7 +638,7 @@ const search = () => {
   };
   const { results, resultIndex } = editor.value.storage.searchAndReplace;
   console.log(results)
-  if(results.length === 0) {
+  if (results.length === 0) {
     ElMessage.warning('未找到匹配项');
     return;
   }
@@ -706,7 +714,7 @@ const generateMindmap = () => {
   http.request({
     url: '/ai/stream',
     method: 'POST',
-    data:[
+    data: [
       {
         role: 'user',
         text: '请将以下 HTML 内容转换为 Markdown 格式的大纲，重点关注标题和列表结构。请不要包含正文详细内容、链接、图片等非结构化信息。只需输出 Markdown 标记，如标题、列表等，以便直接转为思维导图:' + editor.value.getHTML()
@@ -714,11 +722,11 @@ const generateMindmap = () => {
     ],
   }).then(res => {
     console.log(res.data)
-    const eventSource = new EventSource(`https://firlin.cn/api/v1/ai/stream/line?id=${res.data}`,{ withCredentials: true })
+    const eventSource = new EventSource(`https://firlin.cn/api/v1/ai/stream/line?id=${res.data}`, { withCredentials: true })
     // 发送请求：
     console.log(eventSource)
     eventSource.onopen = () => {
-        console.log('连接已建立')
+      console.log('连接已建立')
     };
     eventSource.onmessage = (event) => {
       const section = JSON.parse(event.data).data
@@ -726,14 +734,14 @@ const generateMindmap = () => {
       markdownStore.setMarkdown(markdownStore.markdown + section)
     }
     eventSource.onerror = (event) => {
-        console.log(event)
-        console.log('连接已断开')
-        
-        eventSource.close()
-        ElMessage({
-          message: '思维导图生成成功',
-          type: 'success'
-        })
+      console.log(event)
+      console.log('连接已断开')
+
+      eventSource.close()
+      ElMessage({
+        message: '思维导图生成成功',
+        type: 'success'
+      })
     }
     // markdownContent.value = res.data.markdown
     // markdownStore.setMarkdown(res.data.markdown)
@@ -788,7 +796,7 @@ const insertSvg = () => {
         const imgBase64 = canvas.toDataURL('image/png');
         console.log('Base64 Image:', imgBase64);
 
-        canvas.toBlob(function(blob) {
+        canvas.toBlob(function (blob) {
           console.log('Blob data:', blob);
           const file = new File([blob], `${docIdStore.docTitle}_mindmap.png`, { type: 'image/png' });
           const formData = new FormData();
@@ -828,7 +836,7 @@ const insertSvg = () => {
 
 const exportSvg = async () => {
   const svg = markmap.value.svgRef
-  if(!svg) return 
+  if (!svg) return
   const svgString = new XMLSerializer().serializeToString(svg)
   // 转成blob对象
   const blob = new Blob([svgString], { type: 'image/svg+xml' })
@@ -884,6 +892,18 @@ const showResourceArchive = () => {
 
 
 onMounted(() => {
+
+  http.request({
+    url: '/user/me',
+    method: 'get',
+  }).then((res) => {
+    console.log(res);
+
+    userInfoStore.setUserName(res.data.user_name)
+    userInfoStore.setAvatar(res.data.avatar)
+    userInfoStore.setVip(res.data.vip)
+    userInfoStore.setEmail(res.data.mail)
+  });
 
   if (editor.value) {
     editorStore.setEditorInstance(editor.value)
@@ -946,6 +966,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 1000;
 }
+
 .contextMenu button {
   display: block;
   width: 100%;
@@ -955,6 +976,7 @@ onBeforeUnmount(() => {
   text-align: left;
   cursor: pointer;
 }
+
 .contextMenu button:hover {
   background-color: #f0f0f0;
 }
@@ -963,98 +985,62 @@ onBeforeUnmount(() => {
 <style>
 /* 大纲栏的缩进 */
 .hiddenRight {
-  transform: translateX(100%);
+  width: 0 !important;
+  /* transform: translateX(100%); */
 }
 
-.extraRight {
-  grid-row:2 / 3;
-  animation: .5s ease-in-out;
+
+
+.hiddenLeft {
+  overflow: hidden !important;
+  /* transform: translateX(-100%);
+  width:0 !important;
+  height: 0 !important; */
+  animation: hide_left .5s ease-in-out forwards;
 }
 
-.bothShrink {
-  width: 98% !important;
-  transform: translateX(-1%);
-}
 
-/* .hiddenLeft {
-  transform: translateX(-100%); 
-  opacity:0;
-  animation: hidden-left .5s ease-in-out;
-} */
 
-/* @keyframes hidden-left {
-  from {transform:translateX(-100%);}
-  to {transform:translateX(100%);}
-} */
-
-.hiddenIcon {
-  transform: rotate(180deg);
-}
-
-.extensionLeft {
-  grid-column: 1 / 3;
-  grid-row:2 / 4;
-  /* width: 140%; */
-  /* animation: extension-left .5s ease-in-out; */
-}
-
-.shrinkLeft {
-  width: 100% !important;
-  /* animation: shrink-left .5s ease-in-out; */
-}
-
-.shrinkLeft.extensionRight {
-  width: 150% !important;
-}
-
-@keyframes extension-left {
-  from {
-    width: 100%;
+@keyframes hide_left {
+  99% {
+    height: 94vh;
+    transform: translateX(-100%);
   }
-  to {
-    width: 135%;
+
+  100% {
+    width: 0;
+    height: 0;
   }
 }
 
-@keyframes shrink-left {
-  from {
-    width: 133%;
+.show_left {
+  animation: show_left .5s ease-in-out forwards;
+}
+
+@keyframes show_left {
+  0% {
+    transform: translateX(-100%);
   }
-  to {
-    width: 100%;
+
+  100% {
+    transform: translateX(0);
   }
 }
 
-.extensionRight {
-  width: 134% !important;
-  /* transform:translateX(-21%); */
-  /* transition: all 0.5s ease-in-out !important; */
-  /* animation: extension-right .5s ease-in-out !important; */
+.recover {
+  animation: recover .5s ease-in-out forwards;
 }
 
-.shrinkRight {
-  /* grid-column: 2 / 4; */
-  width: 100% ;
-  /* animation: shrink-right .5s ease-in-out !important; */
-}
-
-/* @keyframes extension-right {
-  from {
-    width: 100% !important;
+@keyframes recover {
+  0% {
+    /* width: calc(100% + 250px); */
+    transform: translateX(-250px);
   }
-  to {
-    width: 125% !important;
+
+  100% {
+    /* transform: translateX(0); */
   }
 }
-
-@keyframes shrink-right {
-  from {
-    width: 125%;
-  }
-  to {
-    width: 100%;
-  }
-} */
 
 
 h1 {
@@ -1096,10 +1082,12 @@ body {
   position: relative;
   width: 100vw;
   height: 100vh;
-  display: grid;
-  gap:0;
+  /* display: grid;
+  gap: 0;
   grid-template-rows: 45px 1fr;
-  grid-template-columns: 2fr 12fr 5fr;
+  grid-template-columns: 2fr 12fr 5fr; */
+  display: flex;
+  flex-wrap: wrap;
   font-size: 15px;
   scrollbar-width: thin;
   scrollbar-color: #868686 #faf0f0;
@@ -1110,7 +1098,7 @@ body {
 .header-bar {
   /* position: fixed;
   top:0; */
-  grid-column: 1 / 4;
+  /* grid-column: 1 / 4; */
   width: 100vw;
   height: 45px;
   background-color: #fff;
@@ -1118,29 +1106,31 @@ body {
   border-bottom: 1px solid #ccc;
   box-shadow: 0 1px 5px 0px #ccc;
   display: flex;
-  justify-content:space-between;
-  align-items:center;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
 
   .docTitle {
     position: absolute;
     width: 210px;
     height: 35px;
-    left:40px;
+    left: 40px;
+
     input {
-      width:100%;
-      font-size:18px;
+      width: 100%;
+      font-size: 18px;
       padding: 5px;
       font-weight: normal;
-      height:100%;
+      height: 100%;
       border: 1px solid transparent;
       border-radius: 10px;
-      outline:none; 
+      outline: none;
       transition: border .3s ease-in-out;
+
       /* text-decoration: underline */
       &:focus {
         border-color: #409EFF;
-        
+
       }
     }
   }
@@ -1158,37 +1148,40 @@ body {
 }
 
 .leftTools {
-  /* border-right: 1px solid #fff; */
-  /* background-color: hsla(0, 17%, 78%, 0.158); */
-  /* box-shadow: 0px 0px 5px #fff inset; */
   height: 94vh;
-  width: 100%;
-  display: flex;
-  justify-content: center;
+  width: 250px;
   transition: all .5s ease-in-out !important;
 }
 
+
+
+
 .rightTools {
   height: 94vh;
-  width: 100%;
+  width: 300px;
   overflow-y: auto;
   transition: all .5s ease-in-out;
   /* padding-left:10px; */
 }
 
 .editor {
+  flex: 1;
   /* background-color: #e6f6f9; */
   /* box-shadow: 1px 0 20px 10px #fff; */
   height: 94vh;
   /* width: 100%; */
-  transition: all .5s ease-in-out;
+  transition: all .5s ease-in-out !important;
 }
+
+/* .editor.recover {
+  width: 250px !important; 
+} */
 
 .editorCard {
   position: relative;
   width: 98%;
   height: 97%;
-  left: 1.3%;
+  left: 1%;
   top: 1%;
   display: flex;
   flex-direction: column;
@@ -1210,7 +1203,8 @@ body {
   align-items: center;
   bottom: -40px;
   right: 0;
-  z-index:10;
+  z-index: 10;
+
   input {
     width: 120px;
     border: 1px solid #ccc;
@@ -1220,20 +1214,29 @@ body {
     outline: none;
     border: 1px solid transparent;
     transition: all .3s ease-in-out;
+
     &:focus {
-        border-color: #409EFF;
+      border-color: #409EFF;
     }
   }
 }
 
 /* 定义淡入淡出的效果 */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s;
 }
-.fade-enter-from, .fade-leave-to /* .fade-leave-active in <2.1.8 */ {
+
+.fade-enter-from,
+.fade-leave-to
+
+/* .fade-leave-active in <2.1.8 */
+  {
   opacity: 0;
 }
-.fade-enter-to, .fade-leave-from {
+
+.fade-enter-to,
+.fade-leave-from {
   opacity: 1;
 }
 
@@ -1256,14 +1259,14 @@ body {
   dialog {
     width: 500px;
     height: 300px;
-    padding:10px 0 30px 10px;
+    padding: 10px 0 30px 10px;
     position: fixed;
     top: 50%;
     left: 40%;
     transform: translate(-50%, -50%);
     background-color: #fff;
     border-radius: 10px;
-    border:none;
+    border: none;
     box-shadow: 0 0 10px #CDCDCD;
   }
 
@@ -1275,7 +1278,8 @@ body {
   .tiptap blockquote {
     margin-left: 0;
     padding-left: 0.5em;
-    border-left: 2px solid #ccc; /* 竖线样式 */
+    border-left: 2px solid #ccc;
+    /* 竖线样式 */
   }
 }
 
@@ -1293,7 +1297,7 @@ body {
 .bubble-menu {
   width: 450px;
   display: flex;
-  flex-wrap:wrap;
+  flex-wrap: wrap;
   justify-content: flex-start;
   align-items: center;
   background-color: #fff;
@@ -1308,11 +1312,11 @@ body {
   button {
     /* width: 60px; */
     color: grey;
-    width:fit-content;
+    width: fit-content;
     height: 40px;
     font-size: 15px;
-    font-weight:700;
-    text-align:center;
+    font-weight: 700;
+    text-align: center;
     padding: 5px;
     margin: 0 3px;
     background-color: rgba(255, 255, 255, 0.9);
@@ -1343,74 +1347,78 @@ body {
   gap: 10px;
 
   .left {
-    display:flex;
+    display: flex;
     align-items: center;
-    flex:1;
-    margin-right:130px;
+    flex: 1;
+    margin-right: 130px;
 
     div {
-      flex:1;
-      font-size:22px;
+      flex: 1;
+      font-size: 22px;
       font-weight: 700;
-      text-align:center;
+      text-align: center;
     }
   }
 }
 
 .ri-fullscreen-line {
-  cursor:pointer;
+  cursor: pointer;
   font-size: 16px;
   border-radius: 5px;
-  padding:1px 3px 0;
+  padding: 1px 3px 0;
   transition: all .3s ease-in-out;
+
   &:hover {
-      background-color: #E5E5E5;
+    background-color: #E5E5E5;
   }
 }
 
 .ri-close-circle-line {
-  cursor:pointer;
+  cursor: pointer;
   font-size: 20px;
   border-radius: 5px;
-  padding:1px 5px 0;
+  padding: 1px 5px 0;
   transition: all .3s ease-in-out;
+
   &:hover {
-      background-color: #E5E5E5;
+    background-color: #E5E5E5;
   }
 }
 
-.chatDialog{
-  height:600px;
+.chatDialog {
+  height: 600px;
   padding: 0;
+
   .el-dialog__header {
     display: none !important;
   }
+
   .el-dialog__body {
-    height:600px;
+    height: 600px;
 
     .root {
       height: 100%;
     }
 
     .root .container .charArea {
-        width:96% !important;
-        height: 70% !important;
+      width: 96% !important;
+      height: 70% !important;
     }
   }
 }
 
 .resourceDialog {
-  height:600px;
+  height: 600px;
+
   /* padding: 0; */
   .el-dialog__header {
     padding-bottom: 0 !important;
   }
+
   /* .el-dialog__body {
     height:600px;
   } */
 }
-
-
 </style>
 
 <style lang="scss">
@@ -1645,75 +1653,88 @@ b {
 
 // 智能功能的toolbox
 .toolbox {
-    background-color: white;
+  background-color: white;
+  border-radius: 10px;
+  padding: 1px;
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  width: 300px;
+  display: flex;
+  /* 弹性布局 */
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: space-around;
+  /* 使按钮水平分布 */
+
+
+
+  button {
+    width: 60px;
+  }
+
+  .model_button {
+    width: 50px;
+  }
+
+  button,
+  .model_button {
+    height: 40px;
+    font-family: 'Microsoft YaHei', sans-serif;
+    font-size: 90%;
+    font-weight: 500;
+
+    color: grey;
+    padding: 1%;
     border-radius: 10px;
-    padding: 1px;
-    box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    width: 300px;
-    display: flex; /* 弹性布局 */
-    align-items: center; /* 垂直居中 */
-    justify-content: space-around; /* 使按钮水平分布 */
-    
-
-
-    button{
-      width:60px;
-    }
-    .model_button{
-      width:50px;
-    }
-    button,.model_button{
-      height:40px;
-      font-family: 'Microsoft YaHei', sans-serif;
-      font-size: 90%;
-      font-weight: 500;
-
-      color: grey;
-      padding: 1%;
-      border-radius: 10px;
-      border: transparent;
-      background-color: rgba(255, 255, 255, 0.9); /* 白色背景，50% 透明度 */
-      transition: background-color 0.3s ease-in-out; /* 过渡效果 */
-      display: inline-block;
-      flex-direction: row;
-    }
-    
-    button:hover,
-    .model_button:hover {
-        background-color: #e9e6e6;
-    }
-    .model_button .ri-flashlight-fill {
-        margin-right: auto;
-    }  
-  }
-
-
-  .model_list_item{
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    i,p {
-      display: inline-box;
-      margin: 0;
-    }
-    p{
-      margin-left: 5px;
-    }
-  }
-  .model_name_button{
-    width: 100%;
-    height: 100%;
     border: transparent;
-    padding:0;
-    background-color: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    transition: ease-in-out 0.3s;
+    background-color: rgba(255, 255, 255, 0.9);
+    /* 白色背景，50% 透明度 */
+    transition: background-color 0.3s ease-in-out;
+    /* 过渡效果 */
+    display: inline-block;
+    flex-direction: row;
   }
-  .model_list_item:hover .model_name_button {
+
+  button:hover,
+  .model_button:hover {
     background-color: #e9e6e6;
   }
-  
+
+  .model_button .ri-flashlight-fill {
+    margin-right: auto;
+  }
+}
+
+
+.model_list_item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  i,
+  p {
+    display: inline-box;
+    margin: 0;
+  }
+
+  p {
+    margin-left: 5px;
+  }
+}
+
+.model_name_button {
+  width: 100%;
+  height: 100%;
+  border: transparent;
+  padding: 0;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  transition: ease-in-out 0.3s;
+}
+
+.model_list_item:hover .model_name_button {
+  background-color: #e9e6e6;
+}
 </style>

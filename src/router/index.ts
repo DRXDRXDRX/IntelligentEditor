@@ -1,4 +1,6 @@
-import { RouteRecordRaw, createRouter, createWebHistory, type RouteRecord  } from "vue-router";
+import { RouteRecordRaw, createRouter, createWebHistory, type RouteRecord, RouteLocationNormalized, NavigationGuardNext  } from "vue-router";
+import { ElMessage } from "element-plus";
+import http from '@/utils/request';
 
 // createRouter 创建路由实例，===> new VueRouter()
 // history 是路由模式，hash模式，history模式
@@ -18,6 +20,27 @@ const routes = [
     {
         path: '/edit',
         name: 'Edit',
+        beforeEnter: (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+            http.request({
+                url: '/user/me',
+                method: 'get',
+                }).then((res) => {
+                    console.log(res.code);
+                    console.log(to.path);
+                    
+                    if(to.path === '/edit' && res.code !== 401) {
+                        next();
+                        
+                    } else {
+                        ElMessage.error('请先登录');
+                        next('/login');
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                    ElMessage.error('请求失败');
+                    next('/login');
+                })
+        },
         component: () => import('../views/Edit.vue')
     },
     {
@@ -44,6 +67,11 @@ const routes = [
         path:'/article',
         name:'article',
         component: () => import('../views/article.vue')
+    },
+    {
+        path: '/:pathMatch(.*)*',
+        name: 'NotFound',
+        component: () => import('../views/NotFound.vue')
     }
     
 ] as RouteRecordRaw[];

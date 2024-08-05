@@ -16,7 +16,7 @@
                 </div>
                 <div :class="'chat-' + section.identity" v-for="section of aiChatStore.chatRecords" :key="section.id">
                     <img :src="section.identity === 'user' ? userInfoStore.userInfo.avatar : 'public/logo-frame-color.png'" alt="头像" />
-                    <span v-html="formatContent(section.content)"></span>
+                    <span v-html="md.render(formatContent(section.content))"></span>
                 </div>
             </div>
             <div class="magic-column">
@@ -83,6 +83,9 @@ import { ElMessage } from 'element-plus'
 import { useSelectionStore, useAIChatStore, useUserInfoStore } from '@/store/index.ts'
 import http from '@/utils/request.ts'
 import DocList from '@/components/DocList.vue'
+import MarkdownIt from 'markdown-it'
+
+const md = new MarkdownIt()
 // import { OCRRequest } from '@/api/index.ts'
 // import html2canvas from 'html2canvas';
 const focused = ref<boolean>(false)
@@ -276,7 +279,11 @@ watch(aiChatStore.chatRecords, scrollToBottom, { deep: true })
 
 const formatContent = (content) => {
     // 将换行符替换为 <br> 标签
-    return content.replace(/\n/g, '<br>');
+    
+    const result = content.replace(/(\*\*[^*]+\*\*):\s*-\s*/g, '$1:\n- ').replace(/ - /g, '\n- ').replace(/\s*\n\s*\n/g, '\n\n'); // 去除多余的空行
+    console.log(content);
+    
+    return result
 }
 
 // 输入框的发送按钮
@@ -522,6 +529,8 @@ const chooseFinish = async (id) => {
                 doc_id: id
             }
         })
+        console.log(vectoringResult);
+        
         if(vectoringResult.code === 0) {
             ElMessage({
                 message: '文档解析成功，请在输入框输入问题对文档进行提问',

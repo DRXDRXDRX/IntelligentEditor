@@ -71,6 +71,8 @@ const login = () => {
             url: '/user/me',
             method: 'get',
             }).then((res) => {
+                console.log(res);
+                
                 userInfoStore.setUserName(res.data.user_name)
                 userInfoStore.setAvatar(res.data.avatar)
                 userInfoStore.setVip(res.data.vip)

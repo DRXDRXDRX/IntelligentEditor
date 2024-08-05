@@ -5,6 +5,21 @@ import http from '@/utils/request.ts';
 import { useDocIdStore, useUserInfoStore } from '@/store'
 import { ElMessage, ElMessageBox } from 'element-plus';
 
+const logout = () => {
+  http.request({
+    url: '/user/logout',
+    method: 'DELETE',
+  }).then((res) => {
+    if(res.code == 0) {
+      router.push('/'); 
+      ElMessage.success("退出登录成功");
+    } else {
+      router.push('/');
+      ElMessage.error("退出登录失败");
+    }
+  })
+}
+
 const docIdStore = useDocIdStore()
 const userInfoStore = useUserInfoStore()
 
@@ -16,58 +31,22 @@ const isSidebarOpen = ref(true);
 // 需要将handleClick 改成handletitleClick
 
 const truncateTitle = (title = '未命名文档') => {
-  const maxLength = 20; // 根据需要调整截断长度
+  const maxLength = 13; // 根据需要调整截断长度
   return title.length > maxLength ? title.slice(0, maxLength) + '...' : title;
 };
-const starredHistory = ref([
-  // { id: 100, title: 'Vue.js Overview and Help' },
-  // { id: 2000, title: 'Hall Sensor Wiring Instructions' },
-  // { id: 300, title: 'South Korean customer' },
-  // { id: 400, title: 'Unity 2D UPR Tutorial' },
-  // { id: 500, title: 'Unity URP模版游戏光照' },
-]);
+const starredHistory = ref([]);
 
 const starredLength = computed(() => {
   return starredHistory.value.length;
 })
 
 
-const todayHistory = ref([
-  // { id: 10, title: 'Vue.js Overview and Help' },
-  // { id: 20, title: 'Hall Sensor Wiring Instructions' },
-  // { id: 30, title: 'South Korean customer' },
-  // { id: 40, title: 'Unity 2D UPR Tutorial' },
-  // { id: 50, title: 'Unity URP模版游戏光照' },
-]);
+const todayHistory = ref([]);
 
 
-const yesterdayHistory = ref([
-  // { id: 6000, title: 'Vision AI Service Integration' },
-  // { id: 7000, title: 'Image OCR and AI Generation' },
-  // { id: 8001, title: 'Speech Conversion and Response' },
-  // { id: 90000, title: 'AI Model Request Summary' },
-  // { id: 100000, title: 'Generate RAG Model Title' },
-  // { id: 111, title: 'Sort Embeddings by Similarity' },
-  // { id: 121, title: 'Topk Text Retrieval Function' },
-  // { id: 131, title: 'Unity2D 地图变暗效果' },
-  // { id: 141, title: 'Developing 2D Action Game' },
-  // { id: 151, title: 'Unity 2D Player Platform Integration' },
-  // { id: 161, title: 'AI生成服务响应调整' },
-]);
+const yesterdayHistory = ref([]);
 
-const weekHistory = ref([
-  // { id: 172, title: '设置音频语言' },
-  // { id: 182, title: '处理长音频文件' },
-  // { id: 192, title: 'Convert Audio to Text' },
-  // { id: 202, title: 'Ethical Risks of Digital Technology' },
-  // { id: 212, title: 'Research Outline for Report' },
-  // { id: 222, title: 'SpeechToText Interface' },
-  // { id: 232, title: 'Recognize Language Decode' },
-  // { id: 242, title: 'Recognize Language, Decode' },
-  // { id: 252, title: 'ADC Payload Activity Prediction' },
-  // { id: 262, title: 'File path issue' },
-  // { id: 272, title: 'Translate Service Request' },
-]);
+const weekHistory = ref([]);
 
 const updateDocList = () => {
   http.request({
@@ -216,7 +195,7 @@ const delet_doc_handler = () => {
     console.log('delete yesterday doc');
     deleteFile(To_be_delected_file_list_id.value)
     // yesterdayHistory.value = yesterdayHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
-  } else if (To_be_delected_column_name.value == 'senven_days') {
+  } else if (To_be_delected_column_name.value == '一周内') {
     console.log('delete week doc');
     deleteFile(To_be_delected_file_list_id.value)
     // weekHistory.value = weekHistory.value.filter(item => item.id !== To_be_delected_file_list_id.value)
@@ -246,7 +225,7 @@ const Add_to_started = (id, column_name) => {
   // }else if(column_name == '昨天'){
   //   let value = yesterdayHistory.value.find(item => item.id === id)?.title;
   //   starredHistory.value.push({ id: id, title: truncateTitle(value) });
-  // }else if(column_name == 'senven_days'){
+  // }else if(column_name == '一周内'){
   //   let value = weekHistory.value.find(item => item.id === id)?.title;
   //   starredHistory.value.push({ id: id, title: truncateTitle(value) });
   // }
@@ -366,15 +345,15 @@ onMounted(() => {
           </li>  
         </transition-group>
            
-        <h3>senven_days</h3>
+        <h3>一周内</h3>
         <transition-group name="list" tag="ul"> 
           <li v-for="item in weekHistory.slice().reverse()" :key="item.id">
             <el-tooltip effect="light" :content=item.title placement="right">
               <div class="button_container"  @mouseover="hoveredItem_history= item.id" @mouseleave="hoveredItem_history = null">
                 <button @click="handleClick(item.id, item.title)">{{ truncateTitle(item.title) }}</button>
                 <div class="action_buttons"  v-if="hoveredItem_history === item.id">
-                  <button @click="Add_to_started(item.id,'senven_days');delet_doc_handler()"><i class="ri-star-line"></i></button>
-                  <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'senven_days');Comfirm_dialog_refer.showModal()">
+                  <button @click="Add_to_started(item.id,'一周内');delet_doc_handler()"><i class="ri-star-line"></i></button>
+                  <button @click="Set_to_be_delected_file_title_and_column_name(item.id,'一周内');Comfirm_dialog_refer.showModal()">
                     <i class="ri-delete-bin-6-line"></i>
                   </button>
                 </div>
@@ -394,6 +373,11 @@ onMounted(() => {
     <!-- 添加左下角的元素 -->
     <div class="account_info">
       <button class="account_plan" style="padding:8px 4px 4px 8px; margin:0px;">{{userInfoStore.userInfo.vip ? 'Professional plan' : 'Free plan'}}</button>
+      <el-popconfirm title="确认退出吗？" confirm-button-text="确认" confirm-button-type="danger" cancel-button-text="取消" cancel-button-type="info" @confirm="logout" >
+          <template #reference>
+            <button class="logout" >退出登录</button>
+          </template>
+      </el-popconfirm>
       <div class="account_email"  @click="Account_dialog_refer.showModal()" >
         <img class="avatar" :src="userInfoStore.userInfo.avatar">
         <div class="info">
@@ -410,7 +394,8 @@ onMounted(() => {
           </div>
         </router-link>
       
-        <div style="display:flex" class="settings" @click="Setting_dialog_refer.showModal()">
+        <!-- <div style="display:flex" class="settings" @click="Setting_dialog_refer.showModal()"> -->
+        <div style="display:flex" class="settings" @click="ElMessage.info('待开发！')">
           <i :class="['ri-settings-line','setting_icon']"></i>
           <span class="setting_text"> settings </span >
         </div>
@@ -510,7 +495,7 @@ onMounted(() => {
 <dialog ref="Account_dialog_refer" style="outline:none; background-color: transparent; cursor:pointer; border:transparent;">
   <div class="account_dialog_outer" style="background-color: white;">
     <div class="account_dialog_header">
-      <h2>Account Settings</h2>
+      <h2>用户设置</h2>
       <button @click="Account_dialog_refer.close()" class="close_button">
         <i class="ri-close-fill"></i>
       </button>
@@ -521,14 +506,14 @@ onMounted(() => {
       <nav class="account_sidebar">
         <ul>
           <li>
-            <button @click=" activeContent='profile' ">Profile</button>
+            <button @click=" activeContent='profile' " :class="{active: activeContent==='profile' }">用户信息</button>
           </li>
           <li>
-            <button @click=" activeContent='billing' ">Billing</button>
+            <button @click=" activeContent='billing' " :class="{active: activeContent==='billing' }">会员</button>
           </li>
-          <li>
+          <!-- <li>
             <button @click=" activeContent='security' ">Security</button>
-          </li>
+          </li> -->
         </ul>
       </nav>
 
@@ -536,43 +521,43 @@ onMounted(() => {
       <div class="accout_content">
         <!-- 不同的表单 -->
           <div v-if="activeContent === 'profile'">
-            <h2>Profile</h2>
+            <h2>用户信息</h2>
             <form @submit.prevent="updateName">
               <div class="form-group">
-                <label for="fullName">Full name</label>
-                <input type="text" id="fullName" v-model="fullName" />
+                <label for="fullName">用户名</label>
+                <input type="text" id="fullName" v-model="userInfoStore.userInfo.username" disabled />
               </div>
               <div class="form-group">
-                <label for="nickname">What should we call you?</label>
-                <input type="text" id="nickname" v-model="nickname" />
+                <label for="email">邮箱</label>
+                <input type="text" id="email" v-model="userInfoStore.userInfo.email" disabled />
               </div>
-              <button type="submit" class="update-button">Update Name</button>
+              <!-- <button type="submit" class="update-button">Update Name</button> -->
             </form>
           </div>
 
           <div v-if="activeContent === 'billing'">
-            <h2 class="billing">Billing</h2>
+            <h2 class="billing">订阅会员</h2>
             <div class="subscribing_card">
-              <h2>Thanks for being a Pro, Li</h2>
+              <h2>¥ 49.9 / 月</h2>
               <ul>
-                <li><i class="ri-check-line" style="margin-right:12px;"></i>Level up your Unbounded editor usage </li>
-                <li><i class="ri-check-line" style="margin-right:12px;"></i>Access to Ernie-bot 4,Ernie-bot 4-turbo,more</li>
-                <li><i class="ri-check-line" style="margin-right:12px;"></i>Work with Unbounded editor around multi-file</li>
-                <li><i class="ri-check-line" style="margin-right:12px;"></i>Priority access during high-traffic periods</li>
-                <li><i class="ri-check-line" style="margin-right:12px;"></i>Early access to new features</li>
+                <li><i class="ri-check-line" style="margin-right:12px;"></i>上传更多文档与文件</li>
+                <li><i class="ri-check-line" style="margin-right:12px;"></i>访问更多模型</li>
+                <li><i class="ri-check-line" style="margin-right:12px;"></i>更多提问次数、文档提问、OCR、图片提问和语音识别</li>
+                <li><i class="ri-check-line" style="margin-right:12px;"></i>更多AI智能生成思维导图次数</li>
+                <li><i class="ri-check-line" style="margin-right:12px;"></i>提前体验新功能</li>
               </ul>
             </div>
           </div>
 
 
-          <div v-if="activeContent === 'security'">
+          <!-- <div v-if="activeContent === 'security'">
             <h2>Security</h2>
             <div class="form-group">
               <label for="password">Password</label>
               <input type="text" id="password" />
             </div>
             <button class="update-button">Update</button>
-          </div>
+          </div> -->
 
 
       </div>
@@ -880,7 +865,7 @@ onMounted(() => {
 
 .account_info {
   transition: transform 0.3s ease;
-  position: absolute ;
+  position: relative ;
   display:inline-block;
   bottom: 0;
   left: 0;
@@ -895,6 +880,24 @@ onMounted(() => {
   color: #666;
   margin-bottom:1px;
   transition: 0.3s ease-in-out;
+  }
+
+  .logout {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    width: 90px;
+    height: 30px;
+    font-size: 15px;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.3s ease-in-out;
+    background-color: #F56C6C;
+    color: #fff;
+    &:hover {
+      background-color: #f75252;
+    }
   }
 
   .account_email {
@@ -1190,10 +1193,10 @@ onMounted(() => {
     text-align: left;
     transition:  0.3s ease-in-out;
   }
-  button:hover,button.active {
+  button:hover, button.active {
     background-color: #ddd;
   }
-  }
+}
 
   .accout_content {
     display: inline-block;
@@ -1243,11 +1246,17 @@ onMounted(() => {
         padding-bottom: 3px;
         border-radius: 10px;
         padding-left:30px;
-        background-color: #5645A1;
+        background-color: #5f50a5;
         color:white;
         font-size:15px;
         font-weight:400;
         line-height: 1.5;
+        transition: all 0.3s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+
+        &:hover {
+          background-color: #4d3c9b;
+          transform: translateY(-5px)
+        }
         
         h2{  
           position: relative;
@@ -1315,4 +1324,8 @@ onMounted(() => {
       
       }
 
+
+.close_button {
+  border: none;
+}
 </style>
