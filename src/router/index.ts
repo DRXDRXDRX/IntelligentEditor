@@ -45,7 +45,6 @@ const routes = [
         name:'article',
         component: () => import('../views/article.vue')
     }
-    
 ] as RouteRecordRaw[];
 
 const router = createRouter({
