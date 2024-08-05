@@ -40,7 +40,11 @@
         </div>
 
         <div class="scroll_line" :style="{ width: lineWidth + '%' }"></div>
-
+        <div class="skip_router">
+          <i :class="['ri-arrow-left-s-line','goback']"  @click="goBack"></i>  
+          <i :class="['ri-arrow-right-s-line','goforward']" @click="goForward" ></i>
+        </div>
+        
         <div class="markdown_page">
             <section class="content" v-html="markdownContent"></section>
         </div>
@@ -71,7 +75,24 @@
   // 获取要渲染的帮助文档的id
   const route = useRoute();
   const router = useRouter();
-  const title_id = route.query.title_id;
+  let title_id = ref('')
+
+  if (route.query.title_id) {
+    title_id.value = route.query.title_id;
+  }
+  watch(() => route.query.title_id, () => {
+    title_id  = route.query.title_id
+    console.log("检测到数据的变化，正在重新的loadmarkdown")
+    let markdownPath = `./help_articles/${title_id}.md`; // 替换为实际的Markdown文件路径
+    loadMarkdown(markdownPath);
+  });
+
+    const goBack=()=> {
+      router.go(-1); // 跳转到上一个页面
+    }
+    const goForward= () => {
+      router.go(1); // 跳转到下一个页面
+    }
 
   // 准备markdown文档渲染
   import { marked } from 'marked';
@@ -107,8 +128,8 @@
   {
       id: 3,
       icon: '📱',
-      title: '无界编辑器 手机验证',
-      description: '验证您的电话号码...',
+      title: '无界编辑器 邮箱验证',
+      description: '验证您的个人身份...',
   },
   {
       id: 4,
@@ -173,8 +194,9 @@
 
   };
 
+
   onMounted(() => {
-    const markdownPath = `./help_articles/${title_id}.md`; // 替换为实际的Markdown文件路径
+    const markdownPath = `./help_articles/${route.query.title_id}.md`; // 替换为实际的Markdown文件路径
     loadMarkdown(markdownPath);
   });
 
@@ -192,7 +214,6 @@
   onUnmounted(() => {
     window.removeEventListener('scroll', updateLineWidth);
   });
-  // 监听 title_id 的变化
   
 
 
@@ -255,6 +276,7 @@
     }
     
 .search_bar {
+  width: 100%;
   position: relative;
   display: flex;
   justify-content: center;
@@ -373,7 +395,7 @@
         border-radius: 15px;
         padding: 20px;
         .content{
-            font-size: 1.3em;
+            font-size: 1.5em;
             
             :deep(h1){
               font-size: 45px;
@@ -381,16 +403,95 @@
               font-family:'Segoe UI', Tahoma, Verdana, sans-serif;
               transform: scaleY(0.9); /* 水平拉伸文字 */  
             }
+            :deep(h3){
+              background-color: rgb(239, 234, 234);
+              font-size: 25px;
+              font-weight: 600;
+              width:auto;
+              display: inline-block; /* 使宽度自适应内容 */
+              color:#666;
+              padding:5px;
+              padding-left: 15px;
+              padding-right: 15px;
+              border-radius: 15px;
+            }
             :deep(blockquote){
                 color:grey;
             }
             :deep(p){
-                font-size: 1.2em;
+                font-size: 0.9em;
                 font-weight: 100;
+            }
+            :deep(li){
+                font-size: 0.8em;
+            }
+            :deep(img){
+              max-width: 100%;
+              height: auto;
             }
 
         }
     }
+    .skip_router{
+      position: absolute;
+      background:transparent;
+      justify-content: space-between;
+      display: flex;
+      width:78%;
+      border-radius: 14px;
+      
+      .goback {
+          position: relative;
+          margin-top:10px;
+          font-size: 30px;
+          width:35px;
+          height:55px;
+          color: #bbb9bc;
+          padding:15px;
+          cursor: pointer;
+          border-radius: 18px;
+          transition:ease-in-out 0.2s; 
+      }
+      .goback::before{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition:transform ease-in-out 0.2s, background ease-in-out 0.2s;
+      }
+
+      .goback:hover {
+        transform: scale(1.3);
+        color: black;
+        background: radial-gradient(circle, #ece9e9, #ffffff);
+      }
+
+      .goforward{
+          position: relative;
+          margin-top:10px;
+          font-size: 30px;
+          width:35px;
+          height:55px;
+          color: #bbb9bc;
+          padding:15px;
+          cursor: pointer;
+          border-radius: 18px;
+          transition:ease-in-out 0.2s; 
+      }
+      .goforward::before{
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition:transform ease-in-out 0.2s, background ease-in-out 0.2s;
+      }
+      .goforward:hover {
+        transform: scale(1.3);
+        color: black;
+        background: radial-gradient(circle, #ece9e9, #ffffff);
+      }
+    }
+
 }
 
 </style>

@@ -73,7 +73,6 @@ const routes = [
         name: 'NotFound',
         component: () => import('../views/NotFound.vue')
     }
-    
 ] as RouteRecordRaw[];
 
 const router = createRouter({
